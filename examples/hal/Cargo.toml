@@ -1,0 +1,14 @@
+[package]
+name = "cw32-book-hal"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# cw32l012-hal 自带运行时（向量表 + .data/.bss 初始化）与默认 panic handler
+# 约定：例程里自己写 #[panic_handler]；无需 cortex-m-rt。
+cw32l012-hal = { path = "../../../cw32l012-hal/cw32l012-hal" }
+
+[[example]]
+name = "ch04_blink_pc13"
+path = "examples/ch04_blink_pc13.rs"

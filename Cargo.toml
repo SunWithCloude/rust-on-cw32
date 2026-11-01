@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "examples/pac",
+    "examples/hal",
+    "examples/embassy",
+]

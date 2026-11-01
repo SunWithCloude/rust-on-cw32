@@ -1,0 +1,23 @@
+[package]
+name = "cw32-book-pac"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
+
+# 例程依赖仅对 ARM 裸机目标启用（宿主机上 cortex-m 平台代码编译不过）
+[target.'cfg(all(target_arch = "arm", target_os = "none"))'.dev-dependencies]
+cortex-m-rt = { version = "0.7", features = ["device"] }
+defmt = "1"
+defmt-rtt = "0.4"
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+
+[[example]]
+name = "ch02_blink"
+path = "examples/ch02_blink.rs"
+
+[[example]]
+name = "ch03_rtt"
+path = "examples/ch03_rtt.rs"

@@ -1,0 +1,22 @@
+[package]
+name = "cw32-book-embassy"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+# embassy-cw32 自带 SysTick 时间驱动；rt 透传给 PAC（向量表）
+embassy-cw32 = { path = "../../../embassy-cw32", features = ["rt"] }
+
+# 例程依赖仅对 ARM 裸机目标启用（宿主机上 cortex-m 平台代码编译不过）
+[target.'cfg(all(target_arch = "arm", target_os = "none"))'.dev-dependencies]
+embassy-executor = { version = "0.10", features = ["platform-cortex-m", "executor-thread"] }
+embassy-time = "0.5"
+cortex-m-rt = { version = "0.7", features = ["device"] }
+defmt = "1"
+defmt-rtt = "0.4"
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+
+[[example]]
+name = "ch07_blink_async"
+path = "examples/ch07_blink_async.rs"

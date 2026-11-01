@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  examples:
+    name: build examples (thumbv6m)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 三个生态仓都未（全部）发布 crates.io：按目录名克隆到上一级，
+      # 让 path = "../../../<name>" 依赖成立。embassy-cw32 自己又依赖
+      # ../cw32l012-pac，同样落在上一级。
+      - name: Checkout sibling path dependencies
+        run: |
+          git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_pac.git "$GITHUB_WORKSPACE/../cw32l012-pac"
+          git clone --depth 1 https://github.com/SunWithCloude/Rust_Cw32L012.git "$GITHUB_WORKSPACE/../cw32l012-hal"
+          git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_embassy.git "$GITHUB_WORKSPACE/../embassy-cw32"
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: build all chapter examples
+        run: cargo build --workspace --target thumbv6m-none-eabi --release --examples
+
+  book:
+    name: mdbook build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: latest
+
+      - run: mdbook build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: book
+
+  deploy:
+    name: deploy to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: book
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

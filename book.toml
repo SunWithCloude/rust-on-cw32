@@ -1,0 +1,18 @@
+[book]
+title = "Rust on CW32"
+description = "以 CW32L012 为教具的嵌入式 Rust 实战——从寄存器到异步外设，全部例程可编译"
+authors = ["SunWithCloude"]
+language = "zh-CN"
+src = "src"
+
+[output.html]
+default-theme = "rust"
+git-repository-url = "https://github.com/SunWithCloude/rust-on-cw32"
+edit-url-template = "https://github.com/SunWithCloude/rust-on-cw32/edit/main/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[build]
+create-missing = true
