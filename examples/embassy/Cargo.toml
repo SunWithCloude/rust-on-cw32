@@ -16,7 +16,36 @@ cortex-m-rt = { version = "0.7", features = ["device"] }
 defmt = "1"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
+# ch14 I2C 扫描例程所需：critical-section 守护扫描结果静态量（embassy-cw32
+# 也依赖它，版本自动归一）；embedded-hal-async 提供 I2c::write 等异步
+# trait 方法（embassy-cw32 的 I2c 驱动实现该 trait）
+critical-section = "1"
+embedded-hal-async = "1"
 
 [[example]]
 name = "ch07_blink_async"
 path = "examples/ch07_blink_async.rs"
+
+[[example]]
+name = "ch10_pwm"
+path = "examples/ch10_pwm.rs"
+
+[[example]]
+name = "ch11_adc"
+path = "examples/ch11_adc.rs"
+
+[[example]]
+name = "ch11_dac_wave"
+path = "examples/ch11_dac_wave.rs"
+
+[[example]]
+name = "ch12_dma_m2m"
+path = "examples/ch12_dma_m2m.rs"
+
+[[example]]
+name = "ch13_rtc_alarm"
+path = "examples/ch13_rtc_alarm.rs"
+
+[[example]]
+name = "ch14_i2c_scan"
+path = "examples/ch14_i2c_scan.rs"
