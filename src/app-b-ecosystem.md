@@ -1,4 +1,4 @@
-# 附录 B —— 生态总览
+# 附录 B 生态总览
 
 本书用到的所有 crate 与工具都来自 [SunWithCloude](https://github.com/SunWithCloude)
 下的开源仓库。这一附录给出全景：三层架构里每层是谁、发布状态如何、与厂商

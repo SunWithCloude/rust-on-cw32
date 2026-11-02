@@ -1,4 +1,4 @@
-# 附录 D —— probe-rs 速查
+# 附录 D probe-rs 速查
 
 烧录、读内存、RTT 日志的命令卡片。命令行为随 probe-rs 版本有差异，
 **版本口径以 cw32-probe-rs-compat 仓 README 为准**（本附录每节标出处）。

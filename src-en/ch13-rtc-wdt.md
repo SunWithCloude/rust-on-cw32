@@ -244,7 +244,7 @@ Build command:
 cargo build --release --target thumbv6m-none-eabi --example ch13_rtc_alarm -p cw32-book-embassy
 ```
 
-## Verification on Hardware
+## On-Hardware Verification
 
 **Status: compiles, not yet run on hardware.** This example is same-source
 as the `rtc_alarm` example in the embassy-cw32 repo; the
