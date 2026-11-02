@@ -1,4 +1,4 @@
-# Appendix A — The 11-Family Matrix and Porting
+# Appendix A The 11-Family Matrix and Porting
 
 embassy-cw32 and cw32-bsp cover all **11 Cortex-M0+ families** of Wuhan Xinyuan
 Semiconductor's CW32 lineup. The body of this book uses the CW32L012 as its

@@ -1,4 +1,4 @@
-# Appendix C — Troubleshooting Guide
+# Appendix C Troubleshooting
 
 Every entry follows the three-part Symptom → Cause → Fix pattern, and the fix
 steps can be followed as written. Sources are collected at the end of each

@@ -1,4 +1,4 @@
-# Chapter 5: UART Transmit and Receive
+# Chapter 5 Serial I/O
 
 An LED can only blink; a serial port can talk. This chapter gets UART1
 running: after reset it prints one welcome line, then echoes back every byte

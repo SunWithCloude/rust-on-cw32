@@ -1,4 +1,4 @@
-# Chapter 6: A Quick Tour of the Blocking Side: Timers, DMA, RTC, and the Watchdog
+# Chapter 6 The Blocking Side at a Glance: Timers, DMA, RTC, Watchdogs
 
 The peripherals of the previous two chapters (GPIO, UART) were all "the CPU
 giving orders". This chapter changes the cast: a **timer** counts the beats

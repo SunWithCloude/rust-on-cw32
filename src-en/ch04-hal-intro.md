@@ -1,4 +1,4 @@
-# Chapter 4: Meet cw32l012-hal
+# Chapter 4 Meeting cw32l012-hal
 
 In Chapter 2, lighting a single LED took five hand-written register steps;
 starting with this chapter we switch to the **blocking HAL** `cw32l012-hal` —

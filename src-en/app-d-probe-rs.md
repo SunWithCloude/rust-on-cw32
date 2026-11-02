@@ -1,4 +1,4 @@
-# Appendix D — probe-rs Quick Reference
+# Appendix D probe-rs Quick Reference
 
 Command cards for flashing, memory reads, and RTT logging. Command behavior
 varies with the probe-rs version; **for version semantics, the

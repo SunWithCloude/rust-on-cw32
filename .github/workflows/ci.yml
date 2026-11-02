@@ -36,7 +36,7 @@ jobs:
         run: cargo build --workspace --target thumbv6m-none-eabi --release --examples
 
   book:
-    name: mdbook build
+    name: mdbook build (zh + en)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,11 +45,19 @@ jobs:
         with:
           mdbook-version: latest
 
-      - run: mdbook build
+      # 中文版（根）+ 英文版（en/ 子配置，输出到 book-en/），
+      # 组装成单一 Pages 站点：/ = 中文，/en/ = 英文
+      - run: |
+          mdbook build
+          mdbook build en
+          mkdir site
+          cp -r book/. site/
+          mkdir site/en
+          cp -r book-en/. site/en/
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: book
+          path: site
 
   deploy:
     name: deploy to GitHub Pages

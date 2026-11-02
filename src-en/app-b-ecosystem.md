@@ -1,4 +1,4 @@
-# Appendix B — Ecosystem Overview
+# Appendix B The Ecosystem at a Glance
 
 Every crate and tool this book uses comes from the open-source repositories
 under [SunWithCloude](https://github.com/SunWithCloude). This appendix gives
