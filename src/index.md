@@ -21,7 +21,11 @@
 - 一块 **CW32L012** 开发板（本书例程默认板载 LED 在 **PC13**、UART1 走
   **PA02(TX)/PA03(RX)**——引脚不同请按原理图改两行）
 - 一个 **ST-Link**（或任何 CMSIS-DAP/DAP-Link）调试器，SWD 四根线接好
-- 一台装着 Windows/Linux/macOS 的电脑，**Rust 由第 1 章负责装好**
+  （SWDIO、SWCLK、GND，通常再加 3V3）
+- 一台装着 Windows/Linux/macOS 的电脑，一个空闲 USB 口
+- 软件只有两样，第 1 章负责装好：**Rust stable 工具链**（含
+  `thumbv6m-none-eabi` 交叉目标）和 **probe-rs**（烧录、调试、收 RTT
+  日志；识别 CW32L012x8 需要 0.33 及以上）
 
 ## 怎么读这本书
 
@@ -37,12 +41,17 @@
 - **附录** 是工具箱：11 个家族的移植矩阵、生态总览、故障排查手册、
   probe-rs 速查。卡住的时候先翻附录 C。
 
+不必从头读到尾：第一部分建议按顺序过一遍，之后每一章都是独立的，
+缺哪块补哪块。
+
 ## 约定
 
 - 例程按章编号：`examples/<层>/examples/chNN_名称.rs`，每章开头给出构建命令。
 - 寄存器与位段一律标注用户手册章节（如 §25.4），手册指
-  《CW32L012 用户手册》V1.4。
-- 命令行统一用 bash 风格；Windows 用户在 PowerShell 下执行等价命令即可。
+  《CW32L012 用户手册》V1.4；未逐页核对处以 PAC/HAL 源码注释中的章节
+  引用为准并如实标注。
+- 命令行统一用 bash 风格；带路径参数的命令在 Windows PowerShell 下需
+  注意分隔符，不带路径的命令两边逐字相同——每处会标注清楚。
 - 本书所有例程基于 Rust 2024 edition；`#[unsafe(no_mangle)]` 这类写法
   是 edition 2024 的要求，遇到时正文会解释。
 

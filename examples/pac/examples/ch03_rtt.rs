@@ -1,26 +1,81 @@
-//! 第 3 章例程：RTT 日志（占位脚手架——本章写作时替换为 defmt-rtt
-//! + panic-probe 的完整版本）。
+//! 第 3 章例程：RTT 日志——defmt 帧经 SEGGER-RTT 上行通道送调试器，
+//! `probe-rs run` 原生解码，不占用任何 UART 引脚。
 //!
-//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch03_rtt
-//! 状态：仅编译通过，未上板。
+//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch03_rtt -p cw32-book-pac
+//! 状态：仅编译未上板。依赖组合（defmt 1 + defmt-rtt 0.4 +
+//! panic-probe(print-defmt)）与 embassy-cw32 的 rtt_hello 完全一致，
+//! 后者提交记录的验证级别为 "release link clean"（链接通过）。
 
 #![no_std]
 #![no_main]
 
+use core::sync::atomic::{AtomicU32, Ordering};
+
 use cortex_m_rt::entry;
+use defmt_rtt as _; // 全局 logger：defmt 帧写入 RTT 上行通道
+use panic_probe as _; // panic handler：panic 时经 defmt 报告位置后停机
 
-#[entry]
-fn main() -> ! {
-    let _irq = cw32l012_pac::Interrupt::Uart1;
+// defmt 1.x 用 timestamp! 宏定义"时间戳提供者"：宏在顶层展开为一个
+// #[export_name = "_defmt_timestamp"] 的函数，defmt-rtt 不提供它，链接
+// 就靠这里。defmt 0.3 时代是手写 #[no_mangle] fn _defmt_timestamp() -> u64，
+// defmt 1.x 起签名改为接收 Formatter、由本宏代写。
+// 本例没有时间驱动，时间戳就用"这是第几条日志"的序号——defmt 只负责把
+// 数字原样带给主机。要真正的毫秒 uptime 需要时间源（embassy 版 rtt_hello
+// 用 embassy-time 提供，本书第 7 章后即是此路线）。
+static SEQ: AtomicU32 = AtomicU32::new(0);
+defmt::timestamp!("{=u32}", SEQ.load(Ordering::Relaxed));
 
-    loop {
-        core::hint::spin_loop();
+// defmt-rtt 用 critical-section 保护日志缓冲，而裸机 M0+ 没有现成的
+// critical-section 实现，必须由固件自己提供一个，否则链接报
+// `undefined symbol: _critical_section_1_0_acquire`。单核标准做法：
+// 读 PRIMASK → `cpsid i` 关中断；释放时仅当初"中断原本开着"才恢复。
+// 与 embassy-cw32 / cw32l012-hal 各自的实现同一写法——一个固件只能
+// 有一个实现，本书靠例程 crate 彼此隔离。
+struct SingleCoreCs;
+critical_section::set_impl!(SingleCoreCs);
+
+unsafe impl critical_section::Impl for SingleCoreCs {
+    unsafe fn acquire() -> critical_section::RawRestoreState {
+        let primask: u32;
+        unsafe {
+            core::arch::asm!("mrs {0}, PRIMASK", "cpsid i", out(reg) primask);
+        }
+        (primask & 1) as u8 // RawRestoreState = u8（dev-dependencies 里钉死）
+    }
+
+    unsafe fn release(token: critical_section::RawRestoreState) {
+        if token == 0 {
+            unsafe { core::arch::asm!("cpsie i") };
+        }
     }
 }
 
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
+#[entry]
+fn main() -> ! {
+    // 引用 PAC：让向量表随 rlib 进入链接（PAC docs/rt-smoke.md 的纪律）
+    let _p = cw32l012_pac::Peripherals::take().unwrap();
+
+    defmt::info!("ch03 RTT hello — 复位默认时钟 HSI 4 MHz");
+
     loop {
-        core::hint::spin_loop();
+        // M0+ 没有原子"读-改-写"指令，core 的 fetch_add 在 thumbv6m 上
+        // 不存在——只能 load/store 三步走；单核且尚未开中断，安全。
+        let n = SEQ.load(Ordering::Relaxed) + 1;
+        SEQ.store(n, Ordering::Relaxed);
+        defmt::info!("heartbeat #{=u32}", n);
+        delay(1_000_000);
+    }
+}
+
+/// 与第 2 章相同的 volatile 软件延时（HCLK = 4 MHz 时约 1~2 秒量级）。
+/// volatile 防止 release 构建把空转循环优化掉。
+fn delay(n: u32) {
+    let mut left = n;
+    // SAFETY: 只在本函数内经裸指针 volatile 访问栈上局部变量，单核无竞争
+    unsafe {
+        let p = core::ptr::addr_of_mut!(left);
+        while p.read_volatile() > 0 {
+            p.write_volatile(p.read_volatile() - 1);
+        }
     }
 }

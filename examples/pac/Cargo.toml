@@ -10,6 +10,11 @@ cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
 # 例程依赖仅对 ARM 裸机目标启用（宿主机上 cortex-m 平台代码编译不过）
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dev-dependencies]
 cortex-m-rt = { version = "0.7", features = ["device"] }
+# ch03_rtt：defmt-rtt 的日志锁需要 critical-section 实现——裸机 M0+ 没有现成
+# 实现，例程内自带 PRIMASK 版（与 embassy-cw32/hal 各自的实现同一个写法）。
+# restore-state-u8 与 embassy-cw32 的声明一致：workspace 内多例程统一编译
+# critical-section 时，restore-state feature 必须全局唯一，否则编译报错。
+critical-section = { version = "1", default-features = false, features = ["restore-state-u8"] }
 defmt = "1"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
