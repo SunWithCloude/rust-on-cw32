@@ -12,3 +12,15 @@ cw32l012-hal = { path = "../../../cw32l012-hal/cw32l012-hal" }
 [[example]]
 name = "ch04_blink_pc13"
 path = "examples/ch04_blink_pc13.rs"
+
+[[example]]
+name = "ch05_uart_echo"
+path = "examples/ch05_uart_echo.rs"
+
+[[example]]
+name = "ch06_tim_dma"
+path = "examples/ch06_tim_dma.rs"
+
+[[example]]
+name = "ch06_rtc_iwdt"
+path = "examples/ch06_rtc_iwdt.rs"

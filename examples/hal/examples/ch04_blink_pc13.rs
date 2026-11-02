@@ -5,8 +5,10 @@
 //! AF 归零 → DIR=0）→ `Output::toggle`（TOG 原子翻转）。
 //! PC13 复位默认 ANALOG=1（模拟态），本例可验证 HAL 已正确清零。
 //!
-//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch04_blink_pc13
-//! 状态：同源例程（cw32l012-hal examples/blink_pc13）已实机验证。
+//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch04_blink_pc13 -p cw32-book-hal
+//! 状态：同源已验证（与 cw32l012-hal examples/blink_pc13.rs 逐行同源；
+//!       TESTING.md 实测通过表：PC13 500ms 方波）。
+//! 差异：本例按 edition 2024 写作 `#[unsafe(no_mangle)]`。
 
 #![no_std]
 #![no_main]
