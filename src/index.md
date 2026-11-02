@@ -57,5 +57,7 @@
 
 ---
 
+> **English edition**: an English translation of this book lives at [`/en/`](/en/)（在线阅读时点击即可切换）。
+
 本书与生态仓库持续演进，发现问题请到
 [仓库 issues](https://github.com/SunWithCloude/rust-on-cw32/issues) 提。

@@ -1,0 +1,19 @@
+[book]
+title = "Rust on CW32"
+description = "Hands-on embedded Rust with the CW32L012 as the teaching vehicle — from raw registers to async peripherals. Every example in this book is a real file under examples/ that CI keeps compiling."
+authors = ["SunWithCloude"]
+language = "en"
+src = "../src-en"
+
+[build]
+build-dir = "../book-en"
+create-missing = true
+
+[output.html]
+default-theme = "rust"
+git-repository-url = "https://github.com/SunWithCloude/rust-on-cw32"
+edit-url-template = "https://github.com/SunWithCloude/rust-on-cw32/edit/main/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
