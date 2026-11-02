@@ -20,3 +20,15 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 [[example]]
 name = "ch07_blink_async"
 path = "examples/ch07_blink_async.rs"
+
+[[example]]
+name = "ch08_gpio_wait"
+path = "examples/ch08_gpio_wait.rs"
+
+[[example]]
+name = "ch08_uart_buffered"
+path = "examples/ch08_uart_buffered.rs"
+
+[[example]]
+name = "ch09_bind_uart"
+path = "examples/ch09_bind_uart.rs"

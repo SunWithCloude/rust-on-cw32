@@ -1,9 +1,13 @@
 //! 第 7 章例程：异步 GPIO 闪烁（PC13，板上 LED 常见位置）。
 //!
-//! embassy 执行器 + 时间驱动 + 异步任务的最小闭环。
+//! embassy 执行器 + SysTick 时间驱动 + 异步任务的最小闭环：
+//! `Timer::after_millis(500)` 只是把任务挂回定时器队列，SysTick 闹钟
+//! 到点再唤醒——等待期间 CPU 睡在执行器里（WFE），不做任何空转。
 //!
-//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch07_blink_async
-//! 状态：同源例程（embassy-cw32 examples/blink_async）已实机验证。
+//! 构建：cargo build --release --target thumbv6m-none-eabi --example ch07_blink_async -p cw32-book-embassy
+//! 状态：同源例程（embassy-cw32 examples/blink_async）已实机验证
+//! （2026-10-24：PC13 精确 500ms 翻转，SysTick 闹钟周期实测
+//! 1,997,499 ≈ 2,000,000 systicks，出处见第 7 章正文）。
 
 #![no_std]
 #![no_main]
