@@ -27,6 +27,11 @@ jobs:
           git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_pac.git "$GITHUB_WORKSPACE/../cw32l012-pac"
           git clone --depth 1 https://github.com/SunWithCloude/Rust_Cw32L012.git "$GITHUB_WORKSPACE/../cw32l012-hal/cw32l012-hal"
           git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_embassy.git "$GITHUB_WORKSPACE/../embassy-cw32"
+          # embassy-cw32 声明了 10 个家族 PAC 的可选 path 依赖
+          # （../cw32-pacs/crates/*）：cargo 解析全量依赖图时要求所有
+          # path 依赖的 manifest 在盘上，缺一个整个 job 在 resolve 就死
+          # （embassy 仓自己的 CI 踩过同一个坑）。
+          git clone --depth 1 https://github.com/SunWithCloude/cw32-pacs.git "$GITHUB_WORKSPACE/../cw32-pacs"
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
