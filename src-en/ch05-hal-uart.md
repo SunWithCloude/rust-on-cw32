@@ -198,7 +198,7 @@ equivalent — this example's main loop has nothing else to do, and you are
 welcome to swap the `if let` for `read_byte` to feel the difference between
 the two styles.
 
-## 5.5 Verification on Hardware
+## 5.5 On-Hardware Verification
 
 **Status: compiles, not yet run on hardware.** Stating the evidence
 honestly:

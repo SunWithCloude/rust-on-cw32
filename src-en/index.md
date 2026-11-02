@@ -23,7 +23,7 @@ This book teaches embedded Rust on the **CW32 series of microcontrollers from CM
 - **Part 2 (Chapters 4–6)** gets you productive with the blocking `cw32l012-hal`: one-line LED control, serial I/O, and a quick tour of timers/DMA/RTC/watchdogs. Its style is the closest to a C standard library — well suited for getting things done fast.
 - **Part 3 (Chapters 7–9)** enters the async world of embassy: the executor, the time driver, interrupt binding. From here on, waiting no longer occupies the CPU.
 - **Part 4 (Chapters 10–14)** goes deeper into async peripherals: PWM, ADC/DAC, DMA, RTC, I2C/SPI — one complete, runnable example per chapter.
-- **The appendices** are the toolbox: a porting matrix for the 11 family, an ecosystem overview, a troubleshooting guide, and a probe-rs quick reference. When you get stuck, reach for Appendix C first.
+- **The appendices** are the toolbox: a porting matrix for the 11 families, an ecosystem overview, a troubleshooting guide, and a probe-rs quick reference. When you get stuck, reach for Appendix C first.
 
 You do not have to read it front to back: Part 1 is best taken in order; after that every chapter stands alone, so fill in whatever you are missing.
 

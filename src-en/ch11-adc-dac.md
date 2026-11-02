@@ -340,7 +340,7 @@ Build command:
 cargo build --release --target thumbv6m-none-eabi --example ch11_dac_wave -p cw32-book-embassy
 ```
 
-## Verification on Hardware
+## On-Hardware Verification
 
 - **ch11_adc: compiles, not yet run on hardware.** Same-source as the
   `adc_async` example in the embassy-cw32 repo; the VDDA/internal-channel

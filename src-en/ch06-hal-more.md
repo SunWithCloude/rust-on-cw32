@@ -520,7 +520,7 @@ is the "stopped feeding → watchdog reset" scene in the flesh. The
 timekeeping results live in the three statics `CLK` (1=LSE, 2=LSI)/
 `DT_AFTER`/`TM_AFTER`.
 
-## 6.6 Verification on Hardware
+## 6.6 On-Hardware Verification
 
 **Status: verified via the same-source examples (per segment) + the combined
 files themselves compile, not yet run on hardware.** The two segments of

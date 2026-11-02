@@ -315,7 +315,7 @@ eye: roughly half a second on, half a second off, a 1-second period — visually
 indistinguishable from the blocking version. The difference is in the CPU:
 once this firmware runs, the 4MHz CPU is asleep between two toggles.
 
-## 7.7 Verification on Hardware
+## 7.7 On-Hardware Verification
 
 The "Verification status" section of the embassy-cw32 README records the
 on-hardware data for this example (2026-10-24, probe-rs + ST-Link V2):

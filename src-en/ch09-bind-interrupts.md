@@ -300,7 +300,7 @@ For the division of labor with the `BufferedUart` version, see the comparison
 table in 8.4: this example demonstrates the "byte-by-byte" form, and both
 forms share the same `bind_interrupts!` and constructor validation.
 
-## 9.6 Verification on Hardware
+## 9.6 On-Hardware Verification
 
 This example shares its source with the ecosystem repo's `uart_echo_async`
 (comments aside), whose entry in the embassy-cw32 README "Verification

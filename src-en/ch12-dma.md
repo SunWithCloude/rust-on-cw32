@@ -172,7 +172,7 @@ Build command:
 cargo build --release --target thumbv6m-none-eabi --example ch12_dma_m2m -p cw32-book-embassy
 ```
 
-## Verification on Hardware
+## On-Hardware Verification
 
 **Status: compiles, not yet run on hardware.** This example is same-source
 as the `dma_mem2mem` example in the embassy-cw32 repo; the register recipe

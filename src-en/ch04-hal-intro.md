@@ -308,7 +308,7 @@ corollary: **if you change the main frequency after `Delay::new`, your
 delays are wrong** — it does not follow the clock. Settle the frequency
 first, then build the `Delay`.
 
-## 4.4 Verification on Hardware
+## 4.4 On-Hardware Verification
 
 **Status: verified via the same-source example.** This chapter's example is
 line-for-line identical in source to `examples/blink_pc13.rs` in the

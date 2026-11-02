@@ -212,7 +212,7 @@ same repo's `examples/spi_loopback_f030.rs`. Both are semantic-level
 implementations pending board verification — read the status note in each
 example's header comments before using them.
 
-## Verification on Hardware
+## On-Hardware Verification
 
 **Status: compiles, not yet run on hardware (L012 path).** This example is
 an L012 port of the embassy-cw32 repo's `i2c_scan_f030`: **the example

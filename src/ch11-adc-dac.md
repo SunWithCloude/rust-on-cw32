@@ -67,7 +67,7 @@ L012 的 DAC 是双通道 12 位（§26）：CH1 引脚输出 PA4（DAC_OUT1）�
 仓 TESTING.md）。
 
 直写模式（复位默认，TENx=0）：`set_ch1/set_ch2/set_both` 写 DHR 后
-1 个 dac_pclk 内载入 DOR，输出立即改变——这是上板验证过的路径。
+1 个 dac_pclk 内载入 DOR，输出立即改变——这是板上验证过的路径。
 
 DMA 波形输出（§26.7）是**请求搬运**模型：`CR0.DMAENx=1` 且 DMA 通道配
 硬件触发源 = 对应 DAC 通道（表 8-8：`hs::DAC1`/`hs::DAC2`）时，DAC 完成

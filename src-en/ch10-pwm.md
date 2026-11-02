@@ -215,7 +215,7 @@ Build command:
 cargo build --release --target thumbv6m-none-eabi --example ch10_pwm -p cw32-book-embassy
 ```
 
-## Verification on Hardware
+## On-Hardware Verification
 
 **Status: compiles, not yet run on hardware.** This example is same-source
 as the `timer_pwm` example in the embassy-cw32 repo; under that example's
