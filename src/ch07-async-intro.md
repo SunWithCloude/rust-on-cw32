@@ -165,6 +165,7 @@ critical-section 实现，而**一个固件只能有一个 critical-section 实�
 use embassy_executor::main;
 use embassy_time::Timer;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals,
     gpio::{Level, Output, Pin},
@@ -185,13 +186,6 @@ async fn main(_spawner: embassy_executor::Spawner) {
         led.toggle();
     }
 }
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 ```
 
 构建命令：
@@ -202,9 +196,12 @@ cargo build --release --target thumbv6m-none-eabi --example ch07_blink_async -p 
 
 逐段看：
 
-**头三行属性**。`#![no_std]`/`#![no_main]` 与自定义 `#[panic_handler]` 在
-第 2 章已经逐个解释过，这里只提一处差异：panic 处理循环里用了
-`core::hint::spin_loop()` 而不是空 `loop {}`——行为等价，语义上更明确。
+**头几行属性与 panic handler 的归属**。`#![no_std]`/`#![no_main]` 在
+第 2 章已经逐个解释过。本例程里看不到 `#[panic_handler]`——它定义在
+本例程 crate 的 `lib.rs` 根，`use cw32_book_embassy as _;` 把 lib 拉进
+链接、自动继承。这正是 `panic-probe` 的同款机制：一个 crate 的全部
+内容可以只是一个 panic handler，靠 `as _` 引入即生效（第 2 章例程
+仍自带 handler 是教学需要；从异步部分起，样板让位给正题）。
 
 **init**。`embassy_cw32::init(Config::default())` 按 4MHz 的复位默认时钟
 启动 SysTick 时间驱动。这是 `#[main]` 函数的第一行，7.4 节讲过原因。

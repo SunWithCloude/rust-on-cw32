@@ -1,6 +1,10 @@
 //! 第 3 章例程：RTT 日志——defmt 帧经 SEGGER-RTT 上行通道送调试器，
 //! `probe-rs run` 原生解码，不占用任何 UART 引脚。
 //!
+//! 延时与心跳灯改用第 2 章工程化小节诞生的 `board` 封装
+//! （`board::delay_ms` / `board::Led`）：日志打点与 LED 翻转同步，
+//! 板上首跑时"灯在闪而日志没滚出来"即 RTT 链路问题。
+//!
 //! 构建：cargo build --release --target thumbv6m-none-eabi --example ch03_rtt -p cw32-book-pac
 //! 状态：仅编译未上板。依赖组合（defmt 1 + defmt-rtt 0.4 +
 //! panic-probe(print-defmt)）与 embassy-cw32 的 rtt_hello 完全一致，
@@ -12,6 +16,8 @@
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use cortex_m_rt::entry;
+use cw32_book_pac::board::{Led, delay_ms};
+use cw32l012_pac::Peripherals;
 use defmt_rtt as _; // 全局 logger：defmt 帧写入 RTT 上行通道
 use panic_probe as _; // panic handler：panic 时经 defmt 报告位置后停机
 
@@ -53,7 +59,10 @@ unsafe impl critical_section::Impl for SingleCoreCs {
 #[entry]
 fn main() -> ! {
     // 引用 PAC：让向量表随 rlib 进入链接（PAC docs/rt-smoke.md 的纪律）
-    let _p = cw32l012_pac::Peripherals::take().unwrap();
+    let p = Peripherals::take().unwrap();
+
+    // 心跳灯：门控/退模拟/方向三步在 board::Led::new 里（第 2 章工程化）
+    let mut led = Led::new(&p);
 
     defmt::info!("ch03 RTT hello — 复位默认时钟 HSI 4 MHz");
 
@@ -63,19 +72,7 @@ fn main() -> ! {
         let n = SEQ.load(Ordering::Relaxed) + 1;
         SEQ.store(n, Ordering::Relaxed);
         defmt::info!("heartbeat #{=u32}", n);
-        delay(1_000_000);
-    }
-}
-
-/// 与第 2 章相同的 volatile 软件延时（HCLK = 4 MHz 时约 1~2 秒量级）。
-/// volatile 防止 release 构建把空转循环优化掉。
-fn delay(n: u32) {
-    let mut left = n;
-    // SAFETY: 只在本函数内经裸指针 volatile 访问栈上局部变量，单核无竞争
-    unsafe {
-        let p = core::ptr::addr_of_mut!(left);
-        while p.read_volatile() > 0 {
-            p.write_volatile(p.read_volatile() - 1);
-        }
+        led.toggle(); // 灯与日志打点同步，双通道互为佐证
+        delay_ms(500);
     }
 }

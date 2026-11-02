@@ -69,6 +69,7 @@ IRQ（IRQ5/6/7/8，手册中断表）。五个等待 API 内部的公共实现�
 
 use embassy_executor::main;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals, SYSCTRL_KEY,
     gpio::{Input, Level, Output, Pin, Pull},
@@ -96,13 +97,6 @@ async fn main(_spawner: embassy_executor::Spawner) {
     loop {
         btn.wait_for_falling_edge().await; // 挂起，等 GPIOA 端口中断
         led.toggle();
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```
@@ -163,9 +157,10 @@ embassy-sync `Pipe` 做环形缓冲，收/发各 64 字节）。数据流是两�
 use embassy_executor::{main, task};
 use embassy_time::Timer;
 
+use cw32_book_embassy::board;
 use embassy_cw32::{
     Config, Peripherals,
-    gpio::{Level, Output, Pin},
+    gpio::Pin,
     uart::{self, BufferedUart},
 };
 
@@ -191,8 +186,8 @@ async fn main(spawner: embassy_executor::Spawner) {
     embassy_cw32::init(Config::default());
 
     let p = Peripherals::take().unwrap();
-    embassy_cw32::sysctrl_enable_gpioc(p.sysctrl);
-    let mut led = Output::new(Pin::new(p.gpioc, 13), Level::High);
+    // PC13 心跳灯：门控 + 构造在 board::led() 里（crate lib 的板级封装）
+    let mut led = board::led();
 
     let u = BufferedUart::new_uart1(
         p.uart1,
@@ -208,13 +203,6 @@ async fn main(spawner: embassy_executor::Spawner) {
     loop {
         Timer::after_millis(1000).await;
         led.toggle();
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```

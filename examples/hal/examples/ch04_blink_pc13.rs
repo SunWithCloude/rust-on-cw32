@@ -13,6 +13,7 @@
 #![no_std]
 #![no_main]
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     delay::Delay,
     gpio::{Level, Pin, PortId},
@@ -41,12 +42,5 @@ fn main() -> ! {
     loop {
         led.toggle();
         delay.delay_ms(500);
-    }
-}
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

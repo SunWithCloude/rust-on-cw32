@@ -195,6 +195,7 @@ cargo build --release --target thumbv6m-none-eabi --example ch06_rtc_iwdt -p cw3
 
 use core::ptr::{addr_of_mut, write_volatile};
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     btim::Btim,
     dma::Dma,
@@ -289,13 +290,6 @@ cw32l012_hal::interrupt!("BTIM1_irq", btim1_isr, {
         ISR_COUNT += 1;
     }
 });
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 ```
 
 烧录后的现象：PC13 电平每 500 ms 翻转一次——这就是"中断路径活着"的
@@ -333,6 +327,7 @@ IWDT，前 5 次喂狗（PC13 快闪 5 下）之后故意停喂，等看门狗�
 
 use core::ptr::{addr_of_mut, write_volatile};
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     delay::Delay,
     gpio::{Level, Pin, PortId},
@@ -434,13 +429,6 @@ fn main() -> ! {
             }
         }
         delay.delay_ms(600); // 喂狗间隔 600ms < 1.5s
-    }
-}
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```

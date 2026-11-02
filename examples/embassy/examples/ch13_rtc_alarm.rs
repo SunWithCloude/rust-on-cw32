@@ -19,9 +19,10 @@
 use embassy_executor::{Spawner, main};
 use embassy_time::Timer;
 
+use cw32_book_embassy::board;
 use embassy_cw32::{
     Config, Peripherals,
-    gpio::{Level, Output, Pin},
+    gpio::Output,
     rtc::{Alarm, DateTime, Rtc, RtcClock},
 };
 
@@ -56,8 +57,8 @@ async fn main(spawner: Spawner) {
     embassy_cw32::init(Config::default()); // 复位默认 SysClk = 4MHz
 
     let p = Peripherals::take().unwrap();
-    embassy_cw32::sysctrl_enable_gpioc(p.sysctrl);
-    let led = Output::new(Pin::new(p.gpioc, 13), Level::High);
+    // PC13 心跳灯：门控 + 构造在 board::led() 里（crate lib 的板级封装）
+    let led = board::led();
     // embassy-executor 0.10：spawn() 返回 ()（SpawnToken 构造失败时内部 panic）
     spawner.spawn(heartbeat(led).unwrap());
 
@@ -120,12 +121,5 @@ async fn main(spawner: Spawner) {
             minute: None,
             second: Some(target),
         });
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

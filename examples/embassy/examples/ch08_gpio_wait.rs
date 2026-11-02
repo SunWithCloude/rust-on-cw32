@@ -12,6 +12,7 @@
 
 use embassy_executor::main;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals, SYSCTRL_KEY,
     gpio::{Input, Level, Output, Pin, Pull},
@@ -39,12 +40,5 @@ async fn main(_spawner: embassy_executor::Spawner) {
     loop {
         btn.wait_for_falling_edge().await; // 挂起，等 GPIOA 端口中断
         led.toggle();
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

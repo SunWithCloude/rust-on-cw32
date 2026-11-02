@@ -87,6 +87,7 @@ SRAM 静态量，可用 probe-rs 读（地址以 `nm` 输出为准）。
 
 use embassy_executor::main;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals, SYSCTRL_KEY,
     gpio::{Level, Output, Pin},
@@ -177,13 +178,6 @@ async fn main(_spawner: embassy_executor::Spawner) {
                 dir_up = true;
             }
         }
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```

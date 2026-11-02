@@ -22,6 +22,7 @@
 
 use core::ptr::{addr_of_mut, write_volatile};
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     delay::Delay,
     gpio::{Level, Pin, PortId},
@@ -123,12 +124,5 @@ fn main() -> ! {
             }
         }
         delay.delay_ms(600); // 喂狗间隔 600ms < 1.5s
-    }
-}
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

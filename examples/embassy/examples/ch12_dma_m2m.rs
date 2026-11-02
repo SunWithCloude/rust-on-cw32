@@ -16,6 +16,7 @@
 use embassy_executor::main;
 use embassy_time::Timer;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{Config, Peripherals};
 
 embassy_cw32::bind_interrupts!(struct Irqs {
@@ -88,12 +89,5 @@ async fn main(_spawner: embassy_executor::Spawner) {
         }
 
         Timer::after_millis(500).await;
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
