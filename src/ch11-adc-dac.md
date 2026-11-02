@@ -100,6 +100,7 @@ DMA 波形输出（§26.7）是**请求搬运**模型：`CR0.DMAENx=1` 且 DMA �
 use embassy_executor::main;
 use embassy_time::Timer;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals, SYSCTRL_KEY,
     adc::{Adc, AdcChannel, AdcClk, SampleCycles},
@@ -162,13 +163,6 @@ async fn main(_spawner: embassy_executor::Spawner) {
         Timer::after_millis(500).await;
     }
 }
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 ```
 
 构建命令：
@@ -204,10 +198,10 @@ TRGO（CR2.MMS=010），DAC1 触发源选 `DacTrig::Gtim1Trgo`，`write_dma`
 use embassy_executor::main;
 use embassy_time::{Duration, Timer, with_timeout};
 
+use cw32_book_embassy::board;
 use embassy_cw32::{
     Config, Peripherals,
     dac::{Dac, DacChannel, DacError, DacTrig},
-    gpio::{Level, Output, Pin},
     pac,
 };
 
@@ -248,9 +242,8 @@ async fn main(_spawner: embassy_executor::Spawner) {
 
     let p = Peripherals::take().unwrap();
 
-    // GPIOC 时钟 + PC13 LED 心跳
-    embassy_cw32::sysctrl_enable_gpioc(p.sysctrl);
-    let mut led = Output::new(Pin::new(p.gpioc, 13), Level::High);
+    // GPIOC 时钟 + PC13 LED 心跳：门控 + 构造在 board::led() 里
+    let mut led = board::led();
 
     // ---- GTIM1 → TRGO 供拍（1kHz 更新；表 26-1 TSEL=0100 = GTIM1_Trgo）----
     // APBEN1.GTIM1（bit6，KEY 读改写——保留其它外设使能位）
@@ -300,13 +293,6 @@ async fn main(_spawner: embassy_executor::Spawner) {
             led.toggle();
         }
         Timer::after_millis(468).await;
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```

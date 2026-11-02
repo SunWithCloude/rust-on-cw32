@@ -5,7 +5,7 @@
 
 **这一章你会学到：**
 
-- `cw32l012-hal` 的设计取舍：零外部依赖、自带运行时、panic handler 为什么由例程自己写；
+- `cw32l012-hal` 的设计取舍：零外部依赖、自带运行时、panic handler 为什么不在 HAL 里、本书如何把它收进例程 crate 的 lib.rs；
 - `Peripherals::take()` 的"一次语义"与外设所有权模型；
 - 逐段精读 `ch04_blink_pc13.rs`：时钟快照、GPIO 门控的 `0x5A5A` 保护写、
   `into_output` 到底清了哪些复位残留；
@@ -30,9 +30,13 @@
 所以例程**不需要** `cortex-m-rt`，也没有 `cortex_m_rt::entry` 宏——直接写
 `fn main() -> !` 即可。
 
-**panic handler 由例程自带。** `#[panic_handler]` 在整个固件里必须唯一，
-HAL 不替你做这个决定。本书例程统一用最简形式：死循环。想接 RTT 打印
-panic 信息的话，把第 3 章的 rprintln 搬进来即可。
+**panic handler 不由 HAL 提供。** `#[panic_handler]` 在整个固件里必须
+唯一，HAL 不替你做这个决定——这是应用侧的选择。本书把这个决定只做
+一次：handler 写在例程 crate（`cw32-book-hal`）的 `lib.rs` 里，各例程
+一行 `use cw32_book_hal as _;` 把 lib 拉进链接、自动继承——与第 3 章
+`use panic_probe as _;` 同一机制（panic-probe 的全部内容也不过是一个
+panic handler）。handler 本身仍是最简形式：死循环。想接 RTT 打印
+panic 信息的话，把第 3 章的 rprintln 搬进 lib 即可。
 
 **feature 面一览：**
 
@@ -106,6 +110,7 @@ cargo build --release --target thumbv6m-none-eabi --example ch04_blink_pc13 -p c
 #![no_std]
 #![no_main]
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     delay::Delay,
     gpio::{Level, Pin, PortId},
@@ -136,13 +141,6 @@ fn main() -> ! {
         delay.delay_ms(500);
     }
 }
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 ```
 
 `#[unsafe(no_mangle)]` 是 Rust 2024 edition 的要求：把 `main` 以裸符号
@@ -150,7 +148,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 `unsafe(...)` 块由作者为"符号名不被改写"这一前提担保。第 2 章的 PAC
 例程已经用过同样写法。
 
-下面逐段拆解这五十行里的五条关键路径。
+下面逐段拆解这个例程里的五条关键路径。
 
 ### 段 1：时钟快照——Rcc::new 与 clocks()
 

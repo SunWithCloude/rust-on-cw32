@@ -121,6 +121,7 @@ cargo build --release --target thumbv6m-none-eabi --example ch05_uart_echo -p cw
 #![no_std]
 #![no_main]
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     gpio::{Af, Pin, PortId},
     rcc::Rcc,
@@ -152,13 +153,6 @@ fn main() -> ! {
         if let Some(b) = uart.try_read_byte() {
             uart.write_byte(b);
         }
-    }
-}
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 ```

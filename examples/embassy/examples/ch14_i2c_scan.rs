@@ -21,6 +21,7 @@
 use core::cell::RefCell;
 
 use critical_section::Mutex;
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_executor::main;
 use embassy_time::Timer;
 use embedded_hal_async::i2c::I2c as _;
@@ -115,12 +116,5 @@ async fn main(_spawner: embassy_executor::Spawner) {
             led.toggle();
             Timer::after_millis(500).await;
         }
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

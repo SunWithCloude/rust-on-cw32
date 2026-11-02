@@ -128,6 +128,10 @@ uptime，需要先有一个时间源：embassy 生态的 `rtt_hello` 用 embassy
 //! 第 3 章例程：RTT 日志——defmt 帧经 SEGGER-RTT 上行通道送调试器，
 //! `probe-rs run` 原生解码，不占用任何 UART 引脚。
 //!
+//! 延时与心跳灯改用第 2 章工程化小节诞生的 `board` 封装
+//! （`board::delay_ms` / `board::Led`）：日志打点与 LED 翻转同步，
+//! 板上首跑时"灯在闪而日志没滚出来"即 RTT 链路问题。
+//!
 //! 构建：cargo build --release --target thumbv6m-none-eabi --example ch03_rtt -p cw32-book-pac
 //! 状态：仅编译未上板。依赖组合（defmt 1 + defmt-rtt 0.4 +
 //! panic-probe(print-defmt)）与 embassy-cw32 的 rtt_hello 完全一致，
@@ -139,6 +143,8 @@ uptime，需要先有一个时间源：embassy 生态的 `rtt_hello` 用 embassy
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use cortex_m_rt::entry;
+use cw32_book_pac::board::{Led, delay_ms};
+use cw32l012_pac::Peripherals;
 use defmt_rtt as _; // 全局 logger：defmt 帧写入 RTT 上行通道
 use panic_probe as _; // panic handler：panic 时经 defmt 报告位置后停机
 
@@ -180,7 +186,10 @@ unsafe impl critical_section::Impl for SingleCoreCs {
 #[entry]
 fn main() -> ! {
     // 引用 PAC：让向量表随 rlib 进入链接（PAC docs/rt-smoke.md 的纪律）
-    let _p = cw32l012_pac::Peripherals::take().unwrap();
+    let p = Peripherals::take().unwrap();
+
+    // 心跳灯：门控/退模拟/方向三步在 board::Led::new 里（第 2 章工程化）
+    let mut led = Led::new(&p);
 
     defmt::info!("ch03 RTT hello — 复位默认时钟 HSI 4 MHz");
 
@@ -190,20 +199,8 @@ fn main() -> ! {
         let n = SEQ.load(Ordering::Relaxed) + 1;
         SEQ.store(n, Ordering::Relaxed);
         defmt::info!("heartbeat #{=u32}", n);
-        delay(1_000_000);
-    }
-}
-
-/// 与第 2 章相同的 volatile 软件延时（HCLK = 4 MHz 时约 1~2 秒量级）。
-/// volatile 防止 release 构建把空转循环优化掉。
-fn delay(n: u32) {
-    let mut left = n;
-    // SAFETY: 只在本函数内经裸指针 volatile 访问栈上局部变量，单核无竞争
-    unsafe {
-        let p = core::ptr::addr_of_mut!(left);
-        while p.read_volatile() > 0 {
-            p.write_volatile(p.read_volatile() - 1);
-        }
+        led.toggle(); // 灯与日志打点同步，双通道互为佐证
+        delay_ms(500);
     }
 }
 ```
@@ -213,6 +210,11 @@ fn delay(n: u32) {
 任何 API，`as _` 把"引入它"的意图写在最显眼的地方且不产生未使用警告。
 `info!` 的 `#{=u32}` 是 defmt 的类型化格式：`=u32` 声明参数按 u32 编码，
 主机端据此还原。
+
+延时与心跳灯来自第 2 章工程化小节的 `board` 封装：`board::delay_ms(500)`
+是 SysTick 忙等（毫秒级标定，替代本章旧版的数循环延时），
+`board::Led::new` 三步完成点灯前置。日志打点与 LED 翻转同步——板上
+首跑时，"灯在闪而日志没滚出来"即可判定问题出在 RTT 链路而非主循环。
 
 构建命令：
 
@@ -285,8 +287,10 @@ embassy-cw32 的 `rtt_hello` 完全一致；需要说明的是，`rtt_hello` 的
 2. 输出按行滚出 `INFO` 级别日志，序号连续递增；若出现乱码/缺行，先降
    `DEFMT_RTT_BUFFER_SIZE` 到 512 再试（缓冲溢出截断是 RTT 最常见
    症状——defmt-rtt 默认非阻塞截断模式）；
-3. Ctrl-C 断开后，核对固件是否仍在运行（预期：继续跑；本例程没点灯，
-   可以接着烧第 2 章的 `ch02_blink` 对照看 LED）。
+3. Ctrl-C 断开后，核对固件是否仍在运行（预期：继续跑，PC13 心跳灯
+   以 1 Hz 闪烁——它与日志打点同步翻转）。灯在闪而日志没滚出来，
+   问题在 RTT 链路，回到核对项 1、2；灯也不闪，先查 GPIOC 门控与
+   ANALOG（第 2 章的两个静默坑）。
 
 ## 常见坑
 

@@ -11,6 +11,7 @@
 | 阻塞 HAL | ch04-hal-intro.md, ch05-hal-uart.md, ch06-hal-more.md                 | ch04_blink_pc13.rs, ch05_uart_echo.rs, ch06\_*.rs | examples/hal     |
 | 异步     | ch07-async-intro.md, ch08-async-gpio-uart.md, ch09-bind-interrupts.md | ch07_blink_async.rs, ch08\_*.rs, ch09\_*.rs       | examples/embassy |
 | 外设进阶   | ch10-pwm.md … ch14-i2c-spi.md                                         | ch10\_*.rs … ch14\_*.rs                           | examples/embassy |
+| 共享封装层 | 各章"例程全文/工程化"小节嵌入的 `src/lib.rs`、`src/board.rs` 代码块 | examples/…/src/（lib.rs、board.rs：延时、Led、panic handler） | examples/{pac,hal,embassy} |
 | 附录     | app-a…app-d.md                                                        | 无                                                 | 无                |
 
 - **只动自己名下的文件**。`SUMMARY.md`、`book.toml`、根 `Cargo.toml`、  

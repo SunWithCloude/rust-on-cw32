@@ -16,6 +16,7 @@
 
 use embassy_executor::main;
 
+use cw32_book_embassy as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use embassy_cw32::{
     Config, Peripherals,
     gpio::Pin,
@@ -53,12 +54,5 @@ async fn main(_spawner: embassy_executor::Spawner) {
             }
             Err(_e) => {} // 错误标志已在 read_byte 内经 ICR 清除，继续下一字节
         }
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }

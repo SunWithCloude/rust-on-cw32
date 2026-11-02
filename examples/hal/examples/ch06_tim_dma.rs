@@ -19,6 +19,7 @@
 
 use core::ptr::{addr_of_mut, write_volatile};
 
+use cw32_book_hal as _; // 继承 lib.rs 的 panic handler（panic-probe 同款机制）
 use cw32l012_hal::{
     btim::Btim,
     dma::Dma,
@@ -113,10 +114,3 @@ cw32l012_hal::interrupt!("BTIM1_irq", btim1_isr, {
         ISR_COUNT += 1;
     }
 });
-
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
