@@ -29,6 +29,7 @@
 - [Chapter 12 DMA](ch12-dma.md)
 - [Chapter 13 RTC and Watchdogs](ch13-rtc-wdt.md)
 - [Chapter 14 I2C and SPI](ch14-i2c-spi.md)
+- [Chapter 15 Capstone: A Serial Command Console](ch15-capstone.md)
 
 # Appendices
 

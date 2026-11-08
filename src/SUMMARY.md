@@ -29,6 +29,7 @@
 - [第 12 章 DMA](ch12-dma.md)
 - [第 13 章 RTC 与看门狗](ch13-rtc-wdt.md)
 - [第 14 章 I2C 与 SPI](ch14-i2c-spi.md)
+- [第 15 章 综合实战](ch15-capstone.md)
 
 # 附录
 
