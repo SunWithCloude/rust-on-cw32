@@ -61,3 +61,7 @@ path = "examples/ch13_rtc_alarm.rs"
 [[example]]
 name = "ch14_i2c_scan"
 path = "examples/ch14_i2c_scan.rs"
+
+[[example]]
+name = "ch15_console"
+path = "examples/ch15_console.rs"
