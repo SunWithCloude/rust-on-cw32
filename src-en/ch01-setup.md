@@ -5,7 +5,7 @@ In this chapter you will learn:
 - to install the Rust stable toolchain with `rustup`, and add the cross-compilation target that microcontrollers need, `thumbv6m-none-eabi`;
 - to install the flashing and debugging tool probe-rs, and get to know the debugger in your hand;
 - to set up an editor with `rust-analyzer`;
-- how the three ecosystem dependencies are declared — exact-pinned crates.io releases plus one git dependency — and that **getting through this book requires cloning no repositories**;
+- how the three ecosystem dependencies are declared — exact-pinned crates.io releases (all three dependencies use version refs) — and that **getting through this book requires cloning no repositories**;
 - to verify the whole environment with one command: compile every example in the book into Cortex-M0+ firmware.
 
 This chapter has no firmware example — the goal is that by the end, Chapter 2's `ch02_blink` compiles with a single command.
@@ -86,7 +86,7 @@ The three ecosystem dependencies of this book's examples (introduced one by one 
 |------|------|----------------|
 | `cw32l012-pac-um` | Register access layer (PAC) | crates.io, exact-pinned `=0.3.0` |
 | `cw32l012-hal` | Blocking HAL (the crate lives in a same-named subdirectory of the repo) | crates.io, `"0.9.2"` |
-| `embassy-cw32` | Async HAL | git dependency (not yet published to crates.io) |
+| `embassy-cw32` | Async HAL | crates.io, exact-pinned `=0.4.0` |
 
 **Conclusion first: getting through this book requires cloning no ecosystem repository.** All three dependencies are fetched by cargo automatically. Once Rust is installed, you can start your own project like this from any directory:
 
@@ -113,7 +113,7 @@ embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", bran
 
 Two conventions to note:
 
-- **Why the PAC is exact-pinned with `=`**: any "automatic upgrade" of the register layer could silently shift bitfield assumptions (one bit off, and the whole firmware's behavior changes). Upgrades must change the version number by hand and re-run every example. The HAL can use normal semver (`0.9.2`). embassy-cw32 rides a git dependency because it is not yet published on crates.io (0.4.0 pending) — once it ships, switch back to a version dependency.
+- **Why the PAC is exact-pinned with `=`**: any "automatic upgrade" of the register layer could silently shift bitfield assumptions (one bit off, and the whole firmware's behavior changes). Upgrades must change the version number by hand and re-run every example. The HAL can use normal semver (`0.9.2`). embassy-cw32 0.4.0 is published on crates.io and is exact-pinned the same way (the book uses `=0.4.0`).
 - **For developers who want to modify the ecosystem sources**: clone the ecosystem repos anywhere you like, then add a `[patch.crates-io]` section to **your project's root `Cargo.toml`** pointing the crates.io dependencies back at the local checkouts (this is how this book's own writing-period verification loop worked):
 
 ```toml
@@ -160,6 +160,6 @@ cargo build --release --target thumbv6m-none-eabi --example ch02_blink -p cw32-b
 - **Forgot to run `rustup target add`**: the build fails with `can't find crate for 'core'` — the target's core libraries are missing; go back to the second section and install them.
 - **`cargo install probe-rs-tools` without `--locked`**: dependency resolution may fail; the official documentation explicitly requires `--locked`.
 - **Writing the dependency as `cw32l012-pac` (without `-um`)**: cargo fetches the same-named third-party svd2rust crate on crates.io, which has defects (mismatched API, three register defects). This ecosystem's hand-written PAC is named `cw32l012-pac-um` — see the naming story in Appendix B.
-- **The first build of the embassy examples stalls updating git dependencies**: `embassy-cw32` is a git dependency; the first resolution clones the GitHub repo and needs network access. On offline machines, run `cargo fetch` once on a networked one.
+- **The first build stalls fetching the crates.io index**: resolving the three ecosystem dependencies needs network access (crates.io only — no GitHub clones anymore). On offline machines, run `cargo fetch` once on a networked one.
 - **The first build is slow**: that is normal — the three ecosystem dependencies are being fully compiled for the M0+ once; after that, incremental builds finish in seconds.
 - **rustup installed inside WSL, probe-rs installed on Windows (or the other way around)**: the two environments cannot see each other; install the full set on one side.

@@ -6,7 +6,7 @@
   `thumbv6m-none-eabi`；
 - 安装烧录与调试工具 probe-rs，认识你手里的调试器；
 - 配好带 `rust-analyzer` 的编辑器；
-- 认识三个生态依赖怎么声明——crates.io 精确钉版 + git 依赖，
+- 认识三个生态依赖怎么声明——crates.io 精确钉版（三个依赖全走版本引用），
   **跑通本书不需要克隆任何仓库**；
 - 用一条命令验证整个环境：把书里全部例程编译成 Cortex-M0+ 固件。
 
@@ -105,7 +105,7 @@ probe-rs list
 |------|------|----------------|
 | `cw32l012-pac-um` | 寄存器访问层（PAC） | crates.io，精确钉版 `=0.3.0` |
 | `cw32l012-hal` | 阻塞式 HAL（crate 在仓库内同名子目录） | crates.io，`"0.9.2"` |
-| `embassy-cw32` | 异步 HAL | git 依赖（尚未发布 crates.io） |
+| `embassy-cw32` | 异步 HAL | crates.io，精确钉版 `=0.4.0` |
 
 **结论先行：跑通本书不需要克隆任何生态仓库。** 三个依赖全部由 cargo
 自动拉取。装好 Rust 后，你在任何目录都可以这样起步自己的工程：
@@ -139,9 +139,8 @@ embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", bran
 
 - **为什么 PAC 用 `=` 精确钉版**：寄存器层的任何"自动升级"都可能悄悄
   改变位段假设（位面错一位，整个固件的行为全变），升级必须手动改版本
-  号并重跑全部例程。HAL 用正常 semver（`0.9.2`）即可。embassy-cw32
-  走 git 依赖是因为它还没在 crates.io 发布（0.4.0 待定档）——发布后
-  建议改回版本依赖。
+  号并重跑全部例程。HAL 用正常 semver（`0.9.2`）即可。embassy-cw32 0.4.0
+  起已发布 crates.io，同样精确钉版（本书用 `=0.4.0`）。
 - **想改生态仓源码的开发者**：把生态仓克隆到任意位置，在**自己工程根的
   `Cargo.toml`** 加一段 `[patch.crates-io]`，把 crates.io 依赖指回本地
   检出（本书写作期就是用这个办法边改边验证的）：
@@ -199,8 +198,8 @@ cargo build --release --target thumbv6m-none-eabi --example ch02_blink -p cw32-b
 - **依赖写成 `cw32l012-pac`（漏了 `-um`）**：cargo 会拿到 crates.io 上
   同名的第三方 svd2rust 缺陷版（API 对不上，三处寄存器缺陷）——本生态
   的手写 PAC 名叫 `cw32l012-pac-um`，见附录 B 的命名故事。
-- **首次构建 embassy 例程卡在更新 git 依赖**：`embassy-cw32` 走 git
-  依赖，首次解析要联网 clone GitHub 仓，离线环境请先在有网的机器上
+- **首次构建卡在拉取 crates.io 索引**：三个生态依赖首次解析要联网
+  （仅 crates.io，不 clone 任何 GitHub 仓），离线环境请先在有网的机器上
   `cargo fetch`。
 - **首次编译很慢**：是正常的——三个生态依赖在为 M0+ 完整编译一遍，之后
   增量编译都是秒级。

@@ -81,7 +81,7 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 | `rtc` / `wdt` / `dac` | **仅 L012**（0.4.0 起 rtc/wdt 补齐经典代） | 经典代为 `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt`（另一套 IP）；`dac` 仍仅 L012 |
 | `dma` | L012（`Dma`）+ 经典 7 家族（`ClassicDma`） | F003/L010/L011 无 DMA 硬件，自然无驱动 |
 
-> **0.4.0 增量一句话版**（出处：embassy-cw32 CHANGELOG 未发布段）：经典家族
+> **0.4.0 增量一句话版**（出处：embassy-cw32 CHANGELOG 0.4.0 段，已发布 crates.io）：经典家族
 > UART/SPI DMA、ADC 补齐全部 11 家族、经典 GTIM PWM、经典 RTC/IWDT/WWDGT、
 > L012 FLASH 驱动、L012 OPA、I2C transaction、ATIM 互补 PWM 双代（L012 `atim` +
 > f030 `atim_classic`，见第 16 章）——这些是新驱动，本书正文暂不
@@ -210,7 +210,7 @@ let mut led = Output::new(Pin::new(p.gpioa, 0), Level::High); // PA0
 
 `timer`（PWM）、`rtc`、`wdt`、`dac` 的 L012 版本书里逐章展开；0.4.0 起
 embassy-cw32 为经典代补齐了 GTIM PWM、RTC、IWDT/WWDGT，并给全部 11 家族
-配了 ADC 驱动（出处：embassy-cw32 CHANGELOG 未发布段），本书正文尚未
+配了 ADC 驱动（出处：embassy-cw32 CHANGELOG 0.4.0 段），本书正文尚未
 覆盖这些新驱动。移植第 10/11/13 章到非 L012 家族时，要么改走寄存器层
 （对应家族 PAC），要么直接改用新驱动（以该 CHANGELOG/README 为准）。
 

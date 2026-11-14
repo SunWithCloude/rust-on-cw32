@@ -113,9 +113,8 @@ optimized away] and "静态变量地址漂移" [static address drift]).
 both implementations are enabled at once).
 
 **Cause**: the `critical-section` crate's contract is **one implementation
-per firmware image**. The embassy-cw32 implementation is provided
-automatically by cortex-m's `critical-section-single-core` feature (the
-crate's own `critical-section-impl` feature was removed in 0.4.0);
+per firmware image**. embassy-cw32 keeps its own PRIMASK implementation (the
+`critical-section-impl` feature, on by default, restore-state=u8);
 `cw32l012-hal` ships its own `critical-section-impl` feature. Enabling both
 in the same image breaks the link (source: the ⚠ note and the
 critical-section row in embassy-cw32 README "Relationship to cw32l012-hal";
@@ -124,9 +123,9 @@ per binary").
 
 **Fix**:
 
-1. Pick one: the embassy side uses cortex-m's implementation (pulled in by
-   default with the dependencies), the hal side uses its own
-   `critical-section-impl` — the two must never appear in the same firmware;
+1. Pick one: the embassy side uses its own `critical-section-impl` (on by
+   default), and the hal ships a feature of the same name — the two must
+   never appear in the same firmware;
 2. **This book's approach**: the examples are split into three independent
    crates — `examples/pac`, `examples/hal`, `examples/embassy` — so the
    blocking and async tracks never end up in the same firmware (source: the
@@ -139,10 +138,10 @@ per binary").
 ### Entry 5: dependency resolution failure (`no matching package found`)
 
 **Symptom**: `cargo build` reports `no matching package named ... found`,
-or the git dependency update stalls/fails.
+or the crates.io index/CDN fetch stalls/fails.
 
 **Cause and fix** (the ecosystem dependencies are now all crates.io version
-dependencies plus one git dependency; the old "side-by-side clones + path
+dependencies — no git dependencies at all since 0.4.0; the old "side-by-side clones + path
 dependencies" workflow is retired):
 
 1. **Misspelled crate name**: the hand-written PAC's official crates.io
@@ -150,8 +149,8 @@ dependencies" workflow is retired):
    svd2rust version with defects; same for F030/L010, whose official names
    are `cw32f030-pac-um`/`cw32l010-pac-um` (source: the three naming traps
    in Appendix B);
-2. **Git dependency (embassy-cw32) update failure**: check that github.com
-   is reachable; behind a proxy, set `CARGO_HTTP_PROXY` for cargo; on
+2. **Index/CDN fetch failure**: check that crates.io and static.crates.io
+   are reachable; behind a proxy, set `CARGO_HTTP_PROXY` for cargo; on
    offline machines run `cargo fetch` once on a networked one and copy the
    cargo cache over;
 3. **Developers pointing `[patch.crates-io]` at local checkouts**: the

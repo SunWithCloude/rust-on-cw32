@@ -16,7 +16,7 @@ entry in the hal repo's TESTING.md — a **hardware-verified recipe**: the
 BDTR read-back, brake shutdown and full-range CNT all have measured data.
 The embassy `atim` driver has landed in embassy-cw32 (main branch);
 this chapter now has both the blocking and the async example. Once
-0.4.0 is published, the book's git dependency switches to a version dep.
+0.4.0 is published to crates.io; the book's dependency is now a version dep (`=0.4.0`).
 
 ## Why a single PWM channel is not enough for a half-bridge
 
@@ -290,7 +290,7 @@ is gone); `re_enable_output()` restores.
 
 ## The embassy version: three-phase complementary with async cycle pacing
 
-The `atim` module of `embassy-cw32` (git dependency, main branch) brings
+The `atim` module of `embassy-cw32` 0.4.0 (crates.io) brings
 the same ATIM capabilities into the async world: `AtimPwm::new` takes the
 **three complementary pairs + CH4 single-ended + brake pin** in one call;
 construction leaves MOE off (outputs idle low) and an explicit

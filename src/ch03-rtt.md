@@ -77,16 +77,16 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 
   解法是固件自己 `set_impl!` 一个：单核芯片的标准做法就是"读 PRIMASK
   → `cpsid i` 关中断"，退出时仅当初"中断原本开着"才 `cpsie i` 恢复。
-  例程里的实现与 cortex-m 的 `critical-section-single-core`（embassy
-  侧的实现提供者）、`cw32l012-hal` 内置的版本同一写法。**一个固件只能
+  例程里的实现与 cortex-m 的 `critical-section-single-core`、
+  `cw32l012-hal` 内置的版本同一写法。**一个固件只能
   有一个实现**（同时启用两个会重复定义）——本书靠三个例程 crate 彼此
   隔离来保证这一点。
 
 restore-state 选 `u8` 不是随手写的：cargo 编译整个工作区时会把各 crate
 的 critical-section feature 合并统一，`restore-state-*` 各档**互斥**，
 一次编译里出现两档直接编译报错——整张依赖图只能有一个取法。embassy-cw32
-当前的依赖链统一在 `u8`（它 0.4.0 起的实现将由 cortex-m 的
-`critical-section-single-core` 提供，届时全书例程的取法随之对齐）。
+当前的依赖链统一在 `u8`（实现保留本仓 PRIMASK 版——
+`critical-section-impl` feature 默认开启，全书例程的取法随之对齐）。
 
 ## `_defmt_timestamp`：每条日志的序号
 

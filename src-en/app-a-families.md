@@ -106,8 +106,8 @@ Before porting, first confirm that the target family has the modules you need
 | `rtc` / `wdt` / `dac` | **L012 only** (from 0.4.0 on, rtc/wdt extend to the classic generation) | the classic generation gets `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt` (a different IP); `dac` remains L012-only |
 | `dma` | L012 (`Dma`) + the 7 classic families (`ClassicDma`) | F003/L010/L011 have no DMA hardware, hence no driver |
 
-> **The 0.4.0 additions in one sentence** (source: the unreleased section of
-> the embassy-cw32 CHANGELOG): classic-family UART/SPI DMA, ADC for all 11
+> **The 0.4.0 additions in one sentence** (source: the 0.4.0 section of the embassy-cw32 CHANGELOG, published to
+> crates.io): classic-family UART/SPI DMA, ADC for all 11
 > families, classic GTIM PWM, classic RTC/IWDT/WWDGT, the L012 FLASH driver,
 > the L012 OPA, and I2C transactions, plus two-generation ATIM complementary
 > PWM (L012 `atim` + f030 `atim_classic`, see Chapter 16) — these are new drivers that this book's
@@ -259,8 +259,7 @@ adopted port C, and `Pin::new(p.gpioc, 13)` works.
 The book walks through the L012 versions of `timer` (PWM), `rtc`, `wdt` and
 `dac` chapter by chapter; from 0.4.0 on, embassy-cw32 also brings GTIM PWM,
 RTC, and IWDT/WWDGT to the classic generation, and provides ADC drivers for
-all 11 families (source: the unreleased section of the embassy-cw32
-CHANGELOG) — this book's body does not yet cover those new drivers. When
+all 11 families (source: the 0.4.0 section of the embassy-cw32 CHANGELOG) — this book's body does not yet cover those new drivers. When
 porting Chapters 10/11/13 to a non-L012 family, either drop down to the
 register level (the family's own PAC) or switch to the new drivers directly
 (go by that CHANGELOG/README).

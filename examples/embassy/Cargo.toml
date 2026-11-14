@@ -6,10 +6,10 @@ publish = false
 
 [dependencies]
 # embassy-cw32 自带 SysTick 时间驱动；rt 透传给 PAC（向量表）。
-# 尚未发布 crates.io（0.4.0 待定档），暂走 git 依赖；发布后可改回
-# 版本依赖（embassy-cw32 = { version = "0.4", features = ["rt"] }）。
+# 0.4.0 起已发布 crates.io，走版本依赖（精确钉版：寄存器位面假设
+# 随 PAC 钉版一起锁死，升级须手动改版本号并重跑验证）。
 # 所选家族 PAC 由它的 crates.io 依赖自动带出，无需克隆任何仓。
-embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", branch = "main", features = ["rt"] }
+embassy-cw32 = { version = "=0.4.0", features = ["rt"] }
 
 # 例程依赖仅对 ARM 裸机目标启用（宿主机上 cortex-m 平台代码编译不过）
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dev-dependencies]

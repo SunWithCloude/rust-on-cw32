@@ -10,7 +10,7 @@
 本章例程(阻塞 HAL 版)对应 hal 仓 TESTING.md 的 `atim_deadtime` 条目,
 是**实机验证过的配方**:BDTR 读数、刹车熄灭、CNT 铺满全部有实测数据。
 embassy 版 `atim` 驱动已合入 embassy-cw32(main 分支),本章阻塞版与
-async 版两个例程都有;0.4.0 正式发布后书例程的 git 依赖切版本依赖。
+async 版两个例程都有;0.4.0 已发布 crates.io,书例程已切版本依赖(`=0.4.0`)。
 
 ## 单路 PWM 接不动半桥
 
@@ -249,7 +249,7 @@ fn main() -> ! {
 
 ## embassy 版:三相互补 + 异步周期节拍
 
-`embassy-cw32`(git 依赖,main 分支)的 `atim` 模块把同一套 ATIM 能力
+`embassy-cw32` 0.4.0(crates.io)的 `atim` 模块把同一套 ATIM 能力
 带进异步世界:`AtimPwm::new` 一次收齐**三相互补对 + CH4 单端 + 刹车脚**,
 构造时 MOE 默认关(输出空闲全低),显式 `enable()` 才有波形;
 `wait_update().await` 用更新中断(IRQ13)把 PWM 周期边界变成异步节拍

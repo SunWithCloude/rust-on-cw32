@@ -93,9 +93,8 @@ embassy-cw32 CHANGELOG 修复条）。
 符号/链接冲突）。
 
 **原因**：`critical-section` crate 的约定是**一个固件只能有一个实现**。
-embassy-cw32 的实现由 cortex-m 的 `critical-section-single-core` feature
-随依赖自动提供（embassy 自己的 `critical-section-impl` feature 已在
-0.4.0 删除）；`cw32l012-hal` 则带自己的 `critical-section-impl` feature。
+embassy-cw32 保留自己的 PRIMASK 实现（`critical-section-impl` feature，
+默认开启，restore-state=u8）；`cw32l012-hal` 则带自己的 `critical-section-impl` feature。
 同一固件里两套实现同时进链接就会失败（出处：embassy-cw32 README
 "Relationship to cw32l012-hal" ⚠ 注与 critical-section 行；
 cw32l012-hal README "Only one critical-section implementation may exist
@@ -103,8 +102,8 @@ per binary"）。
 
 **处置**：
 
-1. 二选一：embassy 侧用 cortex-m 的实现（随依赖默认带上），hal 侧用
-   自己的 `critical-section-impl`——两者不出现在同一份固件里；
+1. 二选一：embassy 侧用自己的 `critical-section-impl`（默认开启），hal
+   侧也带一份同名 feature——两者不出现在同一份固件里；
 2. **本书的做法**：例程拆成三个独立 crate——`examples/pac`、
    `examples/hal`、`examples/embassy`，阻塞线与异步线永远不进同一份
    固件（出处：本书根 `Cargo.toml` members；CONVENTIONS §5 已知坑）；
@@ -114,16 +113,16 @@ per binary"）。
 ### 条目 5：依赖解析失败（`no matching package found`）
 
 **症状**：`cargo build` 报 `no matching package named ... found`，或
-git 依赖更新卡住/失败。
+crates.io 索引/CDN 拉取卡住/失败。
 
-**原因与处置**（生态依赖已全部走 crates.io 版本依赖 + 一个 git 依赖，
+**原因与处置**（生态依赖已全部走 crates.io 版本依赖——0.4.0 起不再有任何 git 依赖，
 原"平级克隆 + path 依赖"工作流已废弃）：
 
 1. **crate 名写错**：手写 PAC 的 crates.io 正式名是
    `cw32l012-pac-um`——写成 `cw32l012-pac` 拉到的是第三方 svd2rust
    缺陷版；F030/L010 同理，正式名是 `cw32f030-pac-um`/`cw32l010-pac-um`
    （出处：附录 B 的三个名字陷阱）；
-2. **git 依赖（embassy-cw32）更新失败**：确认网络可达 github.com；
+2. **索引/CDN 拉取失败**：确认网络可达 crates.io 与 static.crates.io；
    代理环境给 cargo 配 `CARGO_HTTP_PROXY`；离线机器先在有网机器上
    `cargo fetch` 再拷贝 cargo 缓存；
 3. **开发者用 `[patch.crates-io]` 指本地检出时**：patch 的 `path` 必须

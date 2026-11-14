@@ -60,9 +60,9 @@ Two key points:
 | Family coverage | L012 only | 11 families |
 
 ⚠ The two tracks' `critical-section` implementations **cannot coexist in the
-same firmware image** (the embassy side's implementation is provided
-automatically by cortex-m's `critical-section-single-core`, the hal ships its
-own `critical-section-impl`, and one firmware may pick only one) — which is
+same firmware image** (embassy and the hal each ship a PRIMASK implementation
+— embassy's is on by default via its `critical-section-impl` feature, and one
+firmware may pick only one) — which is
 why this book switches to separate example crates from Chapter 7 on; see
 Appendix C, entry 4 (source: embassy-cw32 README; CONVENTIONS §5).
 
@@ -73,7 +73,7 @@ Appendix C, entry 4 (source: embassy-cw32 README; CONVENTIONS §5).
 | `cw32l012-hal` | blocking HAL + runtime for the L012 | **published** | `cw32l012-hal = "0.9.2"` | crates.io **0.9.2** (2026-11-14); the README badge points to crates.io/docs.rs; the v0.9 ecosystem features (critical-section/embedded-io/defmt) are verified on hardware |
 | `cw32l012-pac-um` | L012 PAC (hand-written) | **published** (under the renamed title) | `cw32l012-pac-um = "=0.3.0"`, exact-pinned | crates.io **0.3.0** (2026-11-14); its register data is the same source as the hal v0.9 pac module; the original name `cw32l012-pac` is taken, see below |
 | `cw32-pacs` | PACs for the other 10 families | **published** (2026-11-14) | version dependencies: 8 families under original names (`cw32f003-pac` etc., `=0.1.2`), F030/L010 renamed `cw32f030-pac-um`/`cw32l010-pac-um` | all exact-pinned `=0.1.2`; upgrades must change the version number by hand |
-| `embassy-cw32` | async HAL for the 11 families | **unpublished** (0.4.0 pending) | git dependency (switch to a version dependency once published; that is exactly how this book's `examples/embassy` pulls it) | the CHANGELOG has settled 0.1.0/0.2.0 (both 2026-10-24); the unreleased section moves all family PAC dependencies to crates.io and hands the critical-section implementation to cortex-m |
+| `embassy-cw32` | async HAL for the 11 families | **published** | `embassy-cw32 = "=0.4.0"` exact-pinned | crates.io **0.4.0** (2026-11-14); all family PAC dependencies version-pinned; the critical-section implementation remains this crate's PRIMASK version (the `critical-section-impl` feature) |
 | `cw32-bsp` | board-support templates for the 11 families | unpublished | git dependency (`cw32f030-bsp = { git = … }`) | no version number; the README gives git usage |
 | `cw32-probe-rs-compat` | probe-rs target YAML + identification tool | tool repo (no library published) | clone and use | `cw32-detect` builds on the probe-rs 0.32.x public API |
 
@@ -205,12 +205,13 @@ work"; CHANGELOG 0.2.0).
   `cw32r031-pac`/`cw32w031-pac`, each 0.1.2), while the three families whose
   names were taken publish with a `-um` suffix (`cw32f030-pac-um`/
   `cw32l010-pac-um`, each 0.1.2; `cw32l012-pac-um` 0.3.0); `cw32l012-hal`
-  0.9.2 released in the same window. embassy-cw32's family PAC dependencies
-  all moved to crates.io version dependencies (exact-pinned), and the
-  critical-section implementation is now provided by cortex-m's
-  `critical-section-single-core` (source: crates.io release records; the
-  unreleased section of the embassy-cw32 CHANGELOG).
-- **Pending**: scheduling embassy-cw32 0.4.0 and its crates.io release (the
+  0.9.2 released in the same window. embassy-cw32 0.4.0 is published on crates.io: all family PAC dependencies
+  are version-pinned (exact), and the critical-section implementation
+  remains this crate's PRIMASK version (source: crates.io release records;
+  the 0.4.0 section of the embassy-cw32 CHANGELOG).
+- **Landed**: embassy-cw32 0.4.0 published to crates.io (2026-11-14; the
   0.4.0 additions: classic-family UART/SPI DMA, all-family ADC, classic GTIM
-  PWM/RTC/IWDT/WWDGT, the L012 FLASH/OPA, I2C transactions); the release
-  slot for cw32-bsp (source: each repo's README/CHANGELOG).
+  PWM/RTC/IWDT/WWDGT, the L012 FLASH/OPA, I2C transactions, two-generation
+  ATIM complementary PWM, l083 serial multi-instance).
+- **Pending**: the release slot for cw32-bsp (source: each repo's
+  README/CHANGELOG).
