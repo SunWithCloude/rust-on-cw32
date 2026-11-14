@@ -93,40 +93,43 @@ embassy-cw32 CHANGELOG 修复条）。
 符号/链接冲突）。
 
 **原因**：`critical-section` crate 的约定是**一个固件只能有一个实现**。
-`cw32l012-hal` 的 `critical-section-impl` feature 与 `embassy-cw32`
-默认开启的 PRIMASK 实现都提供 `critical-section` 实现，同一固件里同时
-启用就会链接失败（出处：embassy-cw32 README "Relationship to
-cw32l012-hal" ⚠ 注；cw32l012-hal README "Only one critical-section
-implementation may exist per binary"）。
+embassy-cw32 的实现由 cortex-m 的 `critical-section-single-core` feature
+随依赖自动提供（embassy 自己的 `critical-section-impl` feature 已在
+0.4.0 删除）；`cw32l012-hal` 则带自己的 `critical-section-impl` feature。
+同一固件里两套实现同时进链接就会失败（出处：embassy-cw32 README
+"Relationship to cw32l012-hal" ⚠ 注与 critical-section 行；
+cw32l012-hal README "Only one critical-section implementation may exist
+per binary"）。
 
 **处置**：
 
-1. 二选一：用 hal 就别开 embassy-cw32（反之亦然）；
+1. 二选一：embassy 侧用 cortex-m 的实现（随依赖默认带上），hal 侧用
+   自己的 `critical-section-impl`——两者不出现在同一份固件里；
 2. **本书的做法**：例程拆成三个独立 crate——`examples/pac`、
    `examples/hal`、`examples/embassy`，阻塞线与异步线永远不进同一份
    固件（出处：本书根 `Cargo.toml` members；CONVENTIONS §5 已知坑）；
-3. 如果同时用 `cortex-m` 的 `critical-section-single-core`，则要放弃
-   hal 的实现（出处：cw32l012-hal README Feature flags 节）。
+3. `examples/pac` 不依赖任何一方的实现，按第 3 章手写 PRIMASK 版
+   （与 cortex-m 的 single-core 实现同一写法）。
 
-### 条目 5：path 依赖解析失败（`no matching package found`）
+### 条目 5：依赖解析失败（`no matching package found`）
 
-**症状**：`cargo build` 报 `no matching package named ... found` 或
-`failed to load source for dependency ...`，而 crate 名没有拼错。
+**症状**：`cargo build` 报 `no matching package named ... found`，或
+git 依赖更新卡住/失败。
 
-**原因**：cargo 对 path 依赖的要求是**声明的路径上必须真实存在一个
-manifest（Cargo.toml）**。本书 examples 按 `../../..` 相对路径引用生态
-仓；少 clone 一个仓、目录名不一致、层级放错，解析立刻失败。
+**原因与处置**（生态依赖已全部走 crates.io 版本依赖 + 一个 git 依赖，
+原"平级克隆 + path 依赖"工作流已废弃）：
 
-**处置**：
-
-1. 按 CONVENTIONS §6 的布局落仓——本书仓库的上一级放三个目录：
-   `cw32l012-pac`、`cw32l012-hal`（HAL 在其子目录 `cw32l012-hal/`
-   下）、`embassy-cw32`；
-2. 核对 examples/*/Cargo.toml 里的 path 是否指向**含 Cargo.toml 的目录**
-   （注意 hal 是 `../../../cw32l012-hal/cw32l012-hal` 两级）；
-3. 移植到其它家族还要**额外**并排放 `cw32-pacs`（PAC 在
-   `../cw32-pacs/crates/<family>-pac`，出处：embassy-cw32 README
-   "Getting started"）。
+1. **crate 名写错**：手写 PAC 的 crates.io 正式名是
+   `cw32l012-pac-um`——写成 `cw32l012-pac` 拉到的是第三方 svd2rust
+   缺陷版；F030/L010 同理，正式名是 `cw32f030-pac-um`/`cw32l010-pac-um`
+   （出处：附录 B 的三个名字陷阱）；
+2. **git 依赖（embassy-cw32）更新失败**：确认网络可达 github.com；
+   代理环境给 cargo 配 `CARGO_HTTP_PROXY`；离线机器先在有网机器上
+   `cargo fetch` 再拷贝 cargo 缓存；
+3. **开发者用 `[patch.crates-io]` 指本地检出时**：patch 的 `path` 必须
+   指向**含 Cargo.toml 的 crate 目录**（HAL 是仓库根下再套一层
+   `cw32l012-hal/`），且本地 crate 的 `version` 要与被 patch 的
+   crates.io 版本一致——Cargo 按版本匹配 patch，对不上则静默不生效。
 
 ### 条目 6：LED 不亮排查序（模拟态 → 门控 → 极性）
 

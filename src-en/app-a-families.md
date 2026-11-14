@@ -16,18 +16,23 @@ teaching thread; this appendix answers two questions:
 
 ## A.1 The family matrix
 
-**PACs come in two kinds**: `cw32l012-pac` for the CW32L012 is
+**PACs come in two kinds**: `cw32l012-pac-um` for the CW32L012 is
 **hand-written** — transcribed item by item from the *CW32L012 User Manual*
 V1.4 and cross-corrected field by field against the official SVD (source:
 cw32l012-pac README). The PACs of the other 10 families are **generated from
 the vendor's SDK header files** by `cw32-pac-gen`, one crate per family
-(source: cw32-pacs README).
+(source: cw32-pacs README). All 11 family PACs are published on crates.io
+(2026-11-14): 8 families under their original names, while the L012/F030/L010
+trio had to publish with a `-um` suffix (User Manual transcription edition)
+because their original names are taken by third parties — the "PAC crate"
+column below always states the official crates.io name (naming story in
+Appendix B).
 
 | Family | PAC crate | Flash/SRAM | embassy feature name | Reset-default clock | Gating KEY (0x5A5A) | DMA channels | I2C | GPIO ports adopted by the PAC |
 |--------|-----------|------------|----------------------|---------------------|---------------------|--------------|-----|-------------------------------|
-| CW32L010 | `cw32l010-pac` (generated) | 64K/4K | `cw32l010` | **4 MHz** | yes | none | yes | A, B |
+| CW32L010 | `cw32l010-pac-um` (generated; original name taken) | 64K/4K | `cw32l010` | **4 MHz** | yes | none | yes | A, B |
 | CW32L011 | `cw32l011-pac` (generated) | 64K/6K | `cw32l011` | **4 MHz** | yes | none | **no hardware** | A, B, C |
-| CW32L012 | `cw32l012-pac` (**hand-written**, transcribed from UM V1.4) | 64K/8K | `cw32l012` (default) | **4 MHz** | yes | **4** | yes (command-FIFO controller) | A, B, C, F |
+| CW32L012 | `cw32l012-pac-um` (**hand-written**, transcribed from UM V1.4; original name taken) | 64K/8K | `cw32l012` (default) | **4 MHz** | yes | **4** | yes (command-FIFO controller) | A, B, C, F |
 | CW32L031 | `cw32l031-pac` (generated) | 64K/8K | `cw32l031` | 8 MHz | no | 4 (L031 group) | yes (classic state machine) | A, B, C, F |
 | CW32L052 | `cw32l052-pac` (generated) | 64K/8K | `cw32l052` | 8 MHz | no | 4 (L031 group) | yes (classic state machine) | A, B, C, D, F |
 | CW32L083 | `cw32l083-pac` (generated) | 256K/24K | `cw32l083` | 8 MHz | no | **5** | yes (classic state machine) | A, B, C, D, E, F |
@@ -35,7 +40,7 @@ the vendor's SDK header files** by `cw32-pac-gen`, one crate per family
 | CW32W031 | `cw32w031-pac` (generated) | 64K/8K | `cw32w031` | 8 MHz | no | 4 (L031 group) | yes (classic state machine) | A, B, C, F |
 | CW32F003 | `cw32f003-pac` (generated) | 20K/3K | `cw32f003` | 8 MHz | no | none | yes (interrupt named `I2C`, no digit) | A, B, C |
 | CW32F020 | `cw32f020-pac` (generated) | 32K/8K | `cw32f020` | 8 MHz | no | 5 (ch4/5 have no NVIC line, polling only) | yes (classic state machine) | A, B, C, F |
-| CW32F030 | `cw32f030-pac` (generated) | 64K/8K | `cw32f030` | 8 MHz | no (see the KEY footnote below) | **5** | yes (classic state machine, **verified on hardware**) | A, B, C, F |
+| CW32F030 | `cw32f030-pac-um` (generated; original name taken) | 64K/8K | `cw32f030` | 8 MHz | no (see the KEY footnote below) | **5** | yes (classic state machine, **verified on hardware**) | A, B, C, F |
 
 Sources per column:
 
@@ -91,15 +96,21 @@ Before porting, first confirm that the target family has the modules you need
 
 | Module | Families covered | Notes |
 |--------|------------------|-------|
-| `time_driver` / `bind_interrupts!` / `critical-section-impl` | all 11 families | SysTick one-shot-alarm time driver (1 MHz tick); mis-bound interrupts fail at compile time |
+| `time_driver` / `bind_interrupts!` (the critical-section implementation is provided by cortex-m's `critical-section-single-core`, pulled in with the dependencies) | all 11 families | SysTick one-shot-alarm time driver (1 MHz tick); mis-bound interrupts fail at compile time |
 | `gpio` (async) | all 11 families | one shared IRQ per port; on l052/l083 the shared vectors `GPIOC_GPIOD`/`GPIOE_GPIOF` dispatch in pairs |
 | `uart` | all 11 families | L012/F030 have UART1/2/3; **the other families have UART1 only**; `BufferedUart` is available on every family |
 | `spi` | all 11 families | L012 has SPI1/2/3, F030 SPI1/2, the rest a single instance |
 | `i2c` | 10 of 11 (except L011) | L012 is command-FIFO style; the other 9 are classic state-machine style (F030 verified on hardware) |
-| `adc` | L012 + F030/F020 | L012 has dual ADCs (including `vdda_mv()`/`temperature_mc()`); the classic group is a completely different IP, single-shot/4-result sequence |
-| `timer` (PWM) | **L012 only** | GTIM1-4 edge-aligned PWM with a full scale of 10,000 |
-| `rtc` / `wdt` / `dac` | **L012 only** | listed as "not yet supported" in the roadmap (source: embassy-cw32 README Roadmap) |
+| `adc` | L012 + F030/F020 (from 0.4.0 on, all 11 families) | L012 has dual ADCs (including `vdda_mv()`/`temperature_mc()`); the classic group is a completely different IP, single-shot/4-result sequence |
+| `timer` (PWM) | **L012 only** (from 0.4.0 on, classic GTIM PWM has landed) | GTIM1-4 edge-aligned PWM with a full scale of 10,000; the classic generation has no shadow registers, takes effect immediately |
+| `rtc` / `wdt` / `dac` | **L012 only** (from 0.4.0 on, rtc/wdt extend to the classic generation) | the classic generation gets `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt` (a different IP); `dac` remains L012-only |
 | `dma` | L012 (`Dma`) + the 7 classic families (`ClassicDma`) | F003/L010/L011 have no DMA hardware, hence no driver |
+
+> **The 0.4.0 additions in one sentence** (source: the unreleased section of
+> the embassy-cw32 CHANGELOG): classic-family UART/SPI DMA, ADC for all 11
+> families, classic GTIM PWM, classic RTC/IWDT/WWDGT, the L012 FLASH driver,
+> the L012 OPA, and I2C transactions — these are new drivers that this book's
+> body does not yet cover; read that CHANGELOG before porting.
 
 Hardware-verification records (which board verified what):
 
@@ -129,11 +140,12 @@ embassy-cw32 README):
 
 ```toml
 [dependencies]
-embassy-cw32 = { path = "../embassy-cw32", features = ["rt"] }
+embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", branch = "main", features = ["rt"] }
 # F030: turn off the default feature (the default is cw32l012) and enable cw32f030 instead
-# embassy-cw32 = { path = "../embassy-cw32",
-#   default-features = false,
-#   features = ["rt", "cw32f030", "critical-section-impl"] }
+# embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy",
+#   branch = "main", default-features = false,
+#   features = ["rt", "cw32f030"] }
+# (once embassy-cw32 is published on crates.io, switch back to a version dependency)
 ```
 
 The command-line equivalent (source: embassy-cw32 README "F030 family
@@ -141,14 +153,15 @@ notes"):
 
 ```bash
 cargo build --target thumbv6m-none-eabi --release \
-  --no-default-features --features "rt,cw32f030,critical-section-impl"
+  --no-default-features --features "rt,cw32f030"
 ```
 
-The PAC switches automatically with the feature: L012 uses `cw32l012-pac`
-(a same-named checkout must sit next to `embassy-cw32`); the other 10
-families use the corresponding crate from `cw32-pacs` (path
-`../cw32-pacs/crates/<family>-pac`) (source: embassy-cw32 README "Getting
-started").
+The PAC switches automatically with the feature, and every one of them comes
+from crates.io as a version dependency: L012 uses `cw32l012-pac-um`
+(`=0.3.0`), F030/L010 use `cw32f030-pac-um`/`cw32l010-pac-um`, and the other
+8 families use their original names (e.g. `cw32f003-pac`, `cw32l031-pac`, all
+exact-pinned `=0.1.2`) — no PAC repo needs to be cloned (source:
+embassy-cw32 README "Getting started" and its Cargo.toml).
 
 On the blocking side there is no choice: `cw32l012-hal` **covers only the
 L012**. The Part 2 examples cannot be ported to another family by "flipping a
@@ -242,13 +255,14 @@ adopted port C, and `Pin::new(p.gpioc, 13)` works.
 
 ### Step 7: what happens to the L012-exclusive modules
 
-`timer` (PWM), `rtc`, `wdt` and `dac` are currently **L012-only** (source:
-embassy-cw32 README Roadmap); on the classic side only F030/F020 have an ADC
-driver — the ADCs of the L031 group/F003/L010/L011 are "a different IP, not
-wired up" (source: embassy-cw32 CHANGELOG classic-group ADC entry). When
-porting chapters that use these peripherals (Chapters 10/11/13) to a non-L012
-family, either drop down to the register level (the family's own PAC) or wait
-for the drivers to land.
+The book walks through the L012 versions of `timer` (PWM), `rtc`, `wdt` and
+`dac` chapter by chapter; from 0.4.0 on, embassy-cw32 also brings GTIM PWM,
+RTC, and IWDT/WWDGT to the classic generation, and provides ADC drivers for
+all 11 families (source: the unreleased section of the embassy-cw32
+CHANGELOG) — this book's body does not yet cover those new drivers. When
+porting Chapters 10/11/13 to a non-L012 family, either drop down to the
+register level (the family's own PAC) or switch to the new drivers directly
+(go by that CHANGELOG/README).
 
 ### Step 8: flashing and debugging parameters
 

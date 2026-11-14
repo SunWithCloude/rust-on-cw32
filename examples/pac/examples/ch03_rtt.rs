@@ -17,7 +17,7 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 use cortex_m_rt::entry;
 use cw32_book_pac::board::{Led, delay_ms};
-use cw32l012_pac::Peripherals;
+use cw32l012_pac_um::Peripherals;
 use defmt_rtt as _; // 全局 logger：defmt 帧写入 RTT 上行通道
 use panic_probe as _; // panic handler：panic 时经 defmt 报告位置后停机
 
@@ -35,8 +35,8 @@ defmt::timestamp!("{=u32}", SEQ.load(Ordering::Relaxed));
 // critical-section 实现，必须由固件自己提供一个，否则链接报
 // `undefined symbol: _critical_section_1_0_acquire`。单核标准做法：
 // 读 PRIMASK → `cpsid i` 关中断；释放时仅当初"中断原本开着"才恢复。
-// 与 embassy-cw32 / cw32l012-hal 各自的实现同一写法——一个固件只能
-// 有一个实现，本书靠例程 crate 彼此隔离。
+// 与 cortex-m 的 critical-section-single-core、cw32l012-hal 各自的实现
+// 同一写法——一个固件只能有一个实现，本书靠例程 crate 彼此隔离。
 struct SingleCoreCs;
 critical_section::set_impl!(SingleCoreCs);
 

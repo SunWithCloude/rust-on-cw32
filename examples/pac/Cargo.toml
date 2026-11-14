@@ -5,14 +5,19 @@ edition = "2024"
 publish = false
 
 [dependencies]
-cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
+# PAC 走 crates.io 精确钉版（=0.3.0）：寄存器层的任何自动升级都可能破坏
+# 位段假设，升级必须手动改版本号。名字带 -um 后缀——crates.io 上的
+# cw32l012_pac 名字已被第三方 svd2rust 缺陷版占用，手写转录版（UM V1.4）
+# 改名 cw32l012-pac-um 发布。
+cw32l012-pac-um = { version = "=0.3.0", features = ["rt"] }
 
 # lib.rs 的 board 模块用 cortex-m 的 SYST（SysTick 核心外设）做忙等延时。
 # SysTick 是 ARM 核心外设（0xE000_E010），手写 PAC 不建模；cortex-m 已在
 # 工作区依赖树中（embassy-executor 的 cortex-m 平台层引入），这里显式声明
 # 同一 0.7 版本以便 lib 直接使用。仅对 ARM 裸机目标启用（宿主机上
-# cortex-m 平台代码编译不过）。不开任何 feature——critical-section 实现
-# 由各例程自备（ch03）或由 embassy-cw32 提供，cortex-m 不得掺和。
+# cortex-m 平台代码编译不过）。不开任何 critical-section feature——实现
+# 由各例程自备（ch03）或由 embassy 侧的依赖链（cortex-m 的
+# critical-section-single-core）提供，本 crate 不得再掺和。
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dependencies]
 cortex-m = "0.7"
 
@@ -20,9 +25,10 @@ cortex-m = "0.7"
 [target.'cfg(all(target_arch = "arm", target_os = "none"))'.dev-dependencies]
 cortex-m-rt = { version = "0.7", features = ["device"] }
 # ch03_rtt：defmt-rtt 的日志锁需要 critical-section 实现——裸机 M0+ 没有现成
-# 实现，例程内自带 PRIMASK 版（与 embassy-cw32/hal 各自的实现同一个写法）。
-# restore-state-u8 与 embassy-cw32 的声明一致：workspace 内多例程统一编译
-# critical-section 时，restore-state feature 必须全局唯一，否则编译报错。
+# 实现，例程内自带 PRIMASK 版（cortex-m 的 critical-section-single-core 与
+# cw32l012-hal 内置版都是同一写法）。restore-state-* 各档互斥，cargo 编译
+# 整个工作区时会把各 crate 的 feature 合并，一次编译里出现两档直接报错；
+# 本书 pac 例程统一 u8（embassy-cw32 当前依赖链也统一在 u8）。
 critical-section = { version = "1", default-features = false, features = ["restore-state-u8"] }
 defmt = "1"
 defmt-rtt = "0.4"

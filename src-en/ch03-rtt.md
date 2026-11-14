@@ -53,9 +53,9 @@ Each of the three crates has its own job:
   rust-lld: error: undefined symbol: _critical_section_1_0_acquire
   ```
 
-  The fix is to `set_impl!` one in the firmware yourself. The standard single-core recipe is "read PRIMASK → `cpsid i` to mask interrupts", and on exit restore with `cpsie i` only if interrupts were originally enabled. The implementation in the example is written the same way as the built-in versions in `embassy-cw32` and `cw32l012-hal`. **One firmware may carry exactly one implementation** (enabling two is a duplicate definition) — this book keeps that guarantee by keeping the three example crates isolated from each other.
+  The fix is to `set_impl!` one in the firmware yourself. The standard single-core recipe is "read PRIMASK → `cpsid i` to mask interrupts", and on exit restore with `cpsie i` only if interrupts were originally enabled. The implementation in the example is written the same way as cortex-m's `critical-section-single-core` (the provider of the embassy side's implementation) and as the built-in version of `cw32l012-hal`. **One firmware may carry exactly one implementation** (enabling two is a duplicate definition) — this book keeps that guarantee by keeping the three example crates isolated from each other.
 
-Choosing `u8` for the restore state was not written casually: cargo unifies the critical-section feature across the whole workspace, and the `restore-state-*` variants are **mutually exclusive** — selecting two fails the build; what `embassy-cw32` declares is `u8`, and the book's examples stay consistent with it.
+Choosing `u8` for the restore state was not written casually: cargo unifies the critical-section features of all crates when it builds the whole workspace, and the `restore-state-*` variants are **mutually exclusive** — two of them in one build fail the compile, so the whole dependency graph admits only one choice. embassy-cw32's current dependency chain is uniformly on `u8` (from 0.4.0 on, its implementation will be provided by cortex-m's `critical-section-single-core`, and the book's examples will align with that when it lands).
 
 ## `_defmt_timestamp`: a Number for Every Log Line
 
@@ -108,7 +108,7 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 use cortex_m_rt::entry;
 use cw32_book_pac::board::{Led, delay_ms};
-use cw32l012_pac::Peripherals;
+use cw32l012_pac_um::Peripherals;
 use defmt_rtt as _; // global logger: defmt frames into the RTT upstream channel
 use panic_probe as _; // panic handler: report the location via defmt, then halt
 
@@ -131,9 +131,10 @@ defmt::timestamp!("{=u32}", SEQ.load(Ordering::Relaxed));
 // `undefined symbol: _critical_section_1_0_acquire`. The standard
 // single-core recipe: read PRIMASK → `cpsid i` to mask interrupts; on
 // release, restore only if interrupts were originally enabled.
-// Written the same way as the implementations built into embassy-cw32 /
-// cw32l012-hal — one firmware may carry exactly one implementation; this
-// book keeps that by isolating the example crates from each other.
+// Written the same way as the implementations of cortex-m's
+// critical-section-single-core and of cw32l012-hal — one firmware may carry
+// exactly one implementation; this book keeps that by isolating the example
+// crates from each other.
 struct SingleCoreCs;
 critical_section::set_impl!(SingleCoreCs);
 

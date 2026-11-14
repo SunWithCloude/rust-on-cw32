@@ -16,22 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 三个生态仓都未（全部）发布 crates.io：按目录名克隆到上一级，
-      # 让 path = "../../../<name>" 依赖成立。embassy-cw32 自己又依赖
-      # ../cw32l012-pac，同样落在上一级。
-      # 注意 hal 的仓库根=crate 根，但书里的 path 依赖多一层目录
-      # （本地布局 Desktop/cw32l012-hal/<repo>），克隆时克隆进同名
-      # 子目录补齐层级（git clone 会自动创建中间目录）。
-      - name: Checkout sibling path dependencies
-        run: |
-          git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_pac.git "$GITHUB_WORKSPACE/../cw32l012-pac"
-          git clone --depth 1 https://github.com/SunWithCloude/Rust_Cw32L012.git "$GITHUB_WORKSPACE/../cw32l012-hal/cw32l012-hal"
-          git clone --depth 1 https://github.com/SunWithCloude/Cw32l012_embassy.git "$GITHUB_WORKSPACE/../embassy-cw32"
-          # embassy-cw32 声明了 10 个家族 PAC 的可选 path 依赖
-          # （../cw32-pacs/crates/*）：cargo 解析全量依赖图时要求所有
-          # path 依赖的 manifest 在盘上，缺一个整个 job 在 resolve 就死
-          # （embassy 仓自己的 CI 踩过同一个坑）。
-          git clone --depth 1 https://github.com/SunWithCloude/cw32-pacs.git "$GITHUB_WORKSPACE/../cw32-pacs"
+      # 生态依赖不再需要克隆任何仓：PAC 与 HAL 走 crates.io 版本依赖
+      # （精确钉版），embassy-cw32 走 git 依赖（未发布，0.4.0 待定档），
+      # cargo 在 resolve 时自动拉取。
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable

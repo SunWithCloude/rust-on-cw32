@@ -6,7 +6,7 @@
 
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::Peripherals as CorePeripherals;
-use cw32l012_pac::{Peripherals, sysctrl as sc, Gpio};
+use cw32l012_pac_um::{Peripherals, sysctrl as sc, Gpio};
 
 /// PC13 在端口寄存器中的位掩码（GPIO 位段均按 PINy 编号：PIN13 = bit13）
 pub const PIN13: u32 = 1 << 13;
@@ -19,7 +19,7 @@ pub const HCLK_HZ: u32 = 4_000_000;
 
 // SysTick 是 ARMv6-M 的**核心**外设（寄存器组在系统控制空间
 // 0xE000_E010，ARMv6-M 架构参考手册 DDI 0419 §B3.3），不属于 CW32L012
-// 的芯片外设，因此手写 PAC（cw32l012-pac）没有建模它——延时只能经由
+// 的芯片外设，因此手写 PAC（cw32l012-pac-um）没有建模它——延时只能经由
 // cortex-m crate 的 `SYST` 类型访问（该 crate 已在工作区依赖树中，
 // 经 embassy-executor 的 cortex-m 平台层引入；examples/pac 显式声明
 // 0.7 以对齐版本）。

@@ -20,13 +20,16 @@ this book's writing.
       └────────┬──────────────────────────┴──────────┬────────────────────────┘
                │ built-in pac module (same source)   │
       ┌────────┴──────────────────────────┐  ┌───────┴───────────────────────────┐
-      │ cw32l012-pac                      │  │ cw32-pacs (10 crates)             │
+      │ cw32l012-pac-um                   │  │ cw32-pacs (10 crates)             │
       │ hand-written, transcribed from    │  │ generated from vendor SDK headers │
       │ UM V1.4, cross-corrected item by  │  │ by cw32-pac-gen; managed as a     │
       │ item against the official SVD     │  │ single workspace                  │
       └───────────────────────────────────┘  └───────────────────────────────────┘
         PAC layer: no_std, zero runtime dependencies, svd2rust-style API
         (Peripherals::take()/steal(), read()/write()/modify())
+        — all 11 family PACs are published on crates.io (F030/L010/L012
+        under -um names, see B.2); dependencies are version references
+        only, no path/git clones needed
 
       Board layer (optional): cw32-bsp — full pins tables for 11 families + bsp_pin! + blink templates
       Toolchain (independent of the firmware layers):
@@ -57,8 +60,9 @@ Two key points:
 | Family coverage | L012 only | 11 families |
 
 ⚠ The two tracks' `critical-section` implementations **cannot coexist in the
-same firmware image** (linking fails if the hal's `critical-section-impl` and
-embassy-cw32's default implementation are enabled at the same time) — which is
+same firmware image** (the embassy side's implementation is provided
+automatically by cortex-m's `critical-section-single-core`, the hal ships its
+own `critical-section-impl`, and one firmware may pick only one) — which is
 why this book switches to separate example crates from Chapter 7 on; see
 Appendix C, entry 4 (source: embassy-cw32 README; CONVENTIONS §5).
 
@@ -66,10 +70,10 @@ Appendix C, entry 4 (source: embassy-cw32 README; CONVENTIONS §5).
 
 | Repository | Role | crates.io | How to pull it in | Version status |
 |------|------|-----------|----------|----------|
-| `cw32l012-hal` | blocking HAL + runtime for the L012 | **published** | `cw32l012-hal = "0.8"` | local Cargo.toml **0.9.1**; the README badge points to crates.io/docs.rs; the v0.9 ecosystem features (critical-section/embedded-io/defmt) are verified on hardware |
-| `cw32l012-pac` | L012 PAC (hand-written) | **unpublished** — the name is taken | path dependency | local 0.2.1; its register data is byte-for-byte the same source as the hal v0.9.1 pac module |
-| `cw32-pacs` | PACs for the other 10 families | **release pending** | git dependency | crates.io release "to be scheduled once trademark/naming cooperation with the vendor is confirmed" |
-| `embassy-cw32` | async HAL for the 11 families | **unpublished** | git/path dependency | Cargo.toml 0.3.0; the CHANGELOG has settled 0.1.0/0.2.0 (both 2026-10-24); the "0.4.0 increments" section is unreleased |
+| `cw32l012-hal` | blocking HAL + runtime for the L012 | **published** | `cw32l012-hal = "0.9.2"` | crates.io **0.9.2** (2026-11-14); the README badge points to crates.io/docs.rs; the v0.9 ecosystem features (critical-section/embedded-io/defmt) are verified on hardware |
+| `cw32l012-pac-um` | L012 PAC (hand-written) | **published** (under the renamed title) | `cw32l012-pac-um = "=0.3.0"`, exact-pinned | crates.io **0.3.0** (2026-11-14); its register data is the same source as the hal v0.9 pac module; the original name `cw32l012-pac` is taken, see below |
+| `cw32-pacs` | PACs for the other 10 families | **published** (2026-11-14) | version dependencies: 8 families under original names (`cw32f003-pac` etc., `=0.1.2`), F030/L010 renamed `cw32f030-pac-um`/`cw32l010-pac-um` | all exact-pinned `=0.1.2`; upgrades must change the version number by hand |
+| `embassy-cw32` | async HAL for the 11 families | **unpublished** (0.4.0 pending) | git dependency (switch to a version dependency once published; that is exactly how this book's `examples/embassy` pulls it) | the CHANGELOG has settled 0.1.0/0.2.0 (both 2026-10-24); the unreleased section moves all family PAC dependencies to crates.io and hands the critical-section implementation to cortex-m |
 | `cw32-bsp` | board-support templates for the 11 families | unpublished | git dependency (`cw32f030-bsp = { git = … }`) | no version number; the README gives git usage |
 | `cw32-probe-rs-compat` | probe-rs target YAML + identification tool | tool repo (no library published) | clone and use | `cw32-detect` builds on the probe-rs 0.32.x public API |
 
@@ -77,20 +81,30 @@ Sources: cw32l012-hal README (crates.io badge, usage section, Roadmap v0.9
 entry) and Cargo.toml; cw32l012-pac README ("Publishing note", Verification
 section) and Cargo.toml; cw32-pacs README ("发布状态" [publication status]);
 embassy-cw32 Cargo.toml and CHANGELOG; cw32-bsp README ("用法" [usage]);
-cw32-probe-rs-compat README ("已知限制" [known limitations]).
+cw32-probe-rs-compat README ("已知限制" [known limitations]); the crates.io
+release records of each crate (2026-11-14).
 
-Two naming traps that are easy to trip over:
+Three naming traps that are easy to trip over:
 
-1. **`cw32l012_pac` 0.1.1 on crates.io is not the repo this book uses.** That
-   one is generated from the vendor SVD by svd2rust v0.37.1 (published
-   2026-06-25). Because that name is taken, the `cw32l012-pac` used in this
-   book will have to publish under a different name (e.g. `cw32l012-pac-um`)
-   — path dependencies are unaffected. The SVD version has three known
-   defects (`GPIOx_PDR @ 0x0C` missing, `IRQ31 = FAULT` missing,
-   `SYSCTRL.PLL @ 0x28` leftover); the hand-written PAC corrects them per UM
-   V1.4 (source: cw32l012-pac README "Why not the cw32l012_pac 0.1.1";
-   cw32l012-hal README "Register-level confidence").
-2. **The official GitHub repo of `embassy-cw32` was originally named
+1. **`cw32l012_pac` 0.1.1 on crates.io is not this ecosystem's hand-written
+   PAC.** That one is generated from the vendor SVD by svd2rust v0.37.1
+   (published 2026-06-25) and has three known defects (`GPIOx_PDR @ 0x0C`
+   missing, `IRQ31 = FAULT` missing, `SYSCTRL.PLL @ 0x28` leftover). The
+   hand-written PAC (corrected per UM V1.4) therefore publishes as
+   **`cw32l012-pac-um`** (0.3.0) — writing `cw32l012-pac` (without `-um`)
+   in your project pulls in the defective version (source: cw32l012-pac
+   README "Why not the cw32l012_pac 0.1.1"; cw32l012-hal README
+   "Register-level confidence").
+2. **The same-name trap hits more than one family**: `cw32f030-pac`
+   (third party cw32-rust, svd2rust-generated) and `cw32l010-pac` (third
+   party Lioyae) are also taken, so this ecosystem's corresponding PACs
+   publish as `cw32f030-pac-um`/`cw32l010-pac-um` (each 0.1.2). There is
+   also a third-party `cw32f030-hal` (nan-mu, a svd2rust-derived project
+   dormant since 2023) that has nothing to do with this ecosystem — go by
+   publications under [SunWithCloude](https://github.com/SunWithCloude)
+   (source: the crates.io owners pages; the header comment of the
+   embassy-cw32 Cargo.toml).
+3. **The official GitHub repo of `embassy-cw32` was originally named
    `Cw32l012_embassy`** — the README links in cw32-bsp/cw32-pacs still point
    there, and the repo's content is the 11-family async HAL (source: the
    first-line link of the cw32-bsp README; cw32-pacs README ecosystem
@@ -185,6 +199,18 @@ work"; CHANGELOG 0.2.0).
   The F030 target PR #4549 has been merged upstream (for the merge date,
   defer to the probe-rs repo; source: cw32-bsp README ecosystem diagram,
   "both merged upstream").
-- **Pending**: the crates.io release slot for cw32-pacs; republishing
-  `cw32l012-pac` under a new name; scheduling embassy-cw32 0.4.0 (together
-  with the DMA/RTC wrap-up) (source: each repo's README/CHANGELOG).
+- **2026-11-14**: **all family PACs published to crates.io** — 8 families
+  under their original names (`cw32f003-pac`/`cw32f020-pac`/
+  `cw32l011-pac`/`cw32l031-pac`/`cw32l052-pac`/`cw32l083-pac`/
+  `cw32r031-pac`/`cw32w031-pac`, each 0.1.2), while the three families whose
+  names were taken publish with a `-um` suffix (`cw32f030-pac-um`/
+  `cw32l010-pac-um`, each 0.1.2; `cw32l012-pac-um` 0.3.0); `cw32l012-hal`
+  0.9.2 released in the same window. embassy-cw32's family PAC dependencies
+  all moved to crates.io version dependencies (exact-pinned), and the
+  critical-section implementation is now provided by cortex-m's
+  `critical-section-single-core` (source: crates.io release records; the
+  unreleased section of the embassy-cw32 CHANGELOG).
+- **Pending**: scheduling embassy-cw32 0.4.0 and its crates.io release (the
+  0.4.0 additions: classic-family UART/SPI DMA, all-family ADC, classic GTIM
+  PWM/RTC/IWDT/WWDGT, the L012 FLASH/OPA, I2C transactions); the release
+  slot for cw32-bsp (source: each repo's README/CHANGELOG).

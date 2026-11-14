@@ -9,7 +9,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use cw32l012_pac::{Peripherals, sysctrl as sc};
+use cw32l012_pac_um::{Peripherals, sysctrl as sc};
 
 /// PC13 在端口寄存器中的位掩码（GPIO 位段均按 PINy 编号：PIN13 = bit13）
 const PIN13: u32 = 1 << 13;

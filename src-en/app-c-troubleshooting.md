@@ -113,48 +113,53 @@ optimized away] and "静态变量地址漂移" [static address drift]).
 both implementations are enabled at once).
 
 **Cause**: the `critical-section` crate's contract is **one implementation
-per firmware image**. The `critical-section-impl` feature of `cw32l012-hal`
-and the PRIMASK implementation that `embassy-cw32` enables by default both
-provide a `critical-section` implementation; enabling both in the same image
-breaks the link (source: the ⚠ note in embassy-cw32 README "Relationship to
-cw32l012-hal"; cw32l012-hal README "Only one critical-section implementation
-may exist per binary").
+per firmware image**. The embassy-cw32 implementation is provided
+automatically by cortex-m's `critical-section-single-core` feature (the
+crate's own `critical-section-impl` feature was removed in 0.4.0);
+`cw32l012-hal` ships its own `critical-section-impl` feature. Enabling both
+in the same image breaks the link (source: the ⚠ note and the
+critical-section row in embassy-cw32 README "Relationship to cw32l012-hal";
+cw32l012-hal README "Only one critical-section implementation may exist
+per binary").
 
 **Fix**:
 
-1. Pick one: if you use the hal, do not enable embassy-cw32 (and vice versa);
+1. Pick one: the embassy side uses cortex-m's implementation (pulled in by
+   default with the dependencies), the hal side uses its own
+   `critical-section-impl` — the two must never appear in the same firmware;
 2. **This book's approach**: the examples are split into three independent
    crates — `examples/pac`, `examples/hal`, `examples/embassy` — so the
    blocking and async tracks never end up in the same firmware (source: the
    `members` of this book's root `Cargo.toml`; the known-pitfalls list in
    CONVENTIONS §5);
-3. If you also use `cortex-m`'s `critical-section-single-core`, you must give
-   up the hal's implementation (source: cw32l012-hal README Feature flags
-   section).
+3. `examples/pac` depends on neither: it hand-writes the PRIMASK
+   implementation of Chapter 3 (written the same way as cortex-m's
+   single-core implementation).
 
-### Entry 5: path dependency resolution failure (`no matching package found`)
+### Entry 5: dependency resolution failure (`no matching package found`)
 
-**Symptom**: `cargo build` reports `no matching package named ... found` or
-`failed to load source for dependency ...` although the crate name is not
-misspelled.
+**Symptom**: `cargo build` reports `no matching package named ... found`,
+or the git dependency update stalls/fails.
 
-**Cause**: cargo requires that a path dependency's declared path **really
-contains a manifest (Cargo.toml)**. This book's examples reference the
-ecosystem repos at the relative path `../../..`; one repo not cloned, a
-directory name mismatch, or a wrong nesting level breaks resolution
-immediately.
+**Cause and fix** (the ecosystem dependencies are now all crates.io version
+dependencies plus one git dependency; the old "side-by-side clones + path
+dependencies" workflow is retired):
 
-**Fix**:
-
-1. Lay out the repos per CONVENTIONS §6 — three directories next to this
-   book's repo: `cw32l012-pac`, `cw32l012-hal` (the HAL lives in its
-   `cw32l012-hal/` subdirectory), and `embassy-cw32`;
-2. Check that the path in each examples/*/Cargo.toml points to a **directory
-   containing a Cargo.toml** (note the hal is two levels:
-   `../../../cw32l012-hal/cw32l012-hal`);
-3. For ports to other families, additionally place `cw32-pacs` side by side
-   (the PACs at `../cw32-pacs/crates/<family>-pac`; source: embassy-cw32
-   README "Getting started").
+1. **Misspelled crate name**: the hand-written PAC's official crates.io
+   name is `cw32l012-pac-um` — writing `cw32l012-pac` pulls the third-party
+   svd2rust version with defects; same for F030/L010, whose official names
+   are `cw32f030-pac-um`/`cw32l010-pac-um` (source: the three naming traps
+   in Appendix B);
+2. **Git dependency (embassy-cw32) update failure**: check that github.com
+   is reachable; behind a proxy, set `CARGO_HTTP_PROXY` for cargo; on
+   offline machines run `cargo fetch` once on a networked one and copy the
+   cargo cache over;
+3. **Developers pointing `[patch.crates-io]` at local checkouts**: the
+   patch `path` must be a **directory containing a Cargo.toml** (the HAL
+   nests one level deeper, `cw32l012-hal/` under the repo root), and the
+   local crate's `version` must match the crates.io version being patched —
+   cargo matches patches by version, and a mismatch silently disables the
+   patch.
 
 ### Entry 6: LED-not-lit checklist (analog state → gating → polarity)
 

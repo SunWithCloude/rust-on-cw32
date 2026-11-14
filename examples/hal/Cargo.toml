@@ -7,7 +7,8 @@ publish = false
 [dependencies]
 # cw32l012-hal 自带运行时（向量表 + .data/.bss 初始化）与默认 panic handler
 # 约定：例程里自己写 #[panic_handler]；无需 cortex-m-rt。
-cw32l012-hal = { path = "../../../cw32l012-hal/cw32l012-hal" }
+# crates.io 已发布 0.9.2（原 path 依赖改版本依赖，不再需要克隆 HAL 仓）。
+cw32l012-hal = "0.9.2"
 
 [[example]]
 name = "ch04_blink_pc13"

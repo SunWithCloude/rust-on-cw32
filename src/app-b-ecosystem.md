@@ -17,12 +17,14 @@ C SDK 是什么关系。版本信息以各仓 README/CHANGELOG 的口径为准�
       └────────────┬─────────────┴──────────────┬──────────────┘
                    │ 内置 pac 模块（同源转录）     │
       ┌────────────┴────────────┐   ┌───────────┴──────────────┐
-      │ cw32l012-pac            │   │ cw32-pacs（10 个 crate）  │
+      │ cw32l012-pac-um         │   │ cw32-pacs（10 个 crate）  │
       │ 手写，逐项转录 UM V1.4   │   │ cw32-pac-gen 从厂商 SDK   │
       │ 与官方 SVD 逐项纠错      │   │ 头文件生成，workspace 管理 │
       └─────────────────────────┘   └──────────────────────────┘
         PAC 层：no_std、零运行时依赖、svd2rust 风格 API
         （Peripherals::take()/steal()、read()/write()/modify()）
+        ——11 个家族 PAC 全部已发布 crates.io（F030/L010/L012 用 -um 名，
+        见 B.2），依赖一律走版本引用，不再需要 path/git 克隆
 
       板级（可选）：cw32-bsp —— 11 家族 pins 全表 + bsp_pin! + blink 模板
       工具链（独立于固件层）：
@@ -49,19 +51,20 @@ C SDK 是什么关系。版本信息以各仓 README/CHANGELOG 的口径为准�
 | 向量表 | 内置（`UART1_irq` 风格） | cortex-m-rt + PAC `rt`（`UART1` 风格） |
 | 家族覆盖 | 仅 L012 | 11 家族 |
 
-⚠ 两条线的 `critical-section` 实现**不能在同一固件共存**（hal 的
-`critical-section-impl` 与 embassy-cw32 默认实现同时开链接会失败）——本书
-第 7 章起改用独立例程 crate 的原因，详见附录 C 条目 4
-（出处：embassy-cw32 README；CONVENTIONS §5）。
+⚠ 两条线的 `critical-section` 实现**不能在同一固件共存**（embassy 侧的实现
+由 cortex-m 的 `critical-section-single-core` 随依赖自动提供，hal 走自己的
+`critical-section-impl`，一个固件只能选一个）——本书第 7 章起改用独立例程
+crate 的原因，详见附录 C 条目 4（出处：embassy-cw32 README；CONVENTIONS
+§5）。
 
 ## B.2 各仓角色与版本状态
 
 | 仓库 | 角色 | crates.io | 怎么引入 | 版本口径 |
 |------|------|-----------|----------|----------|
-| `cw32l012-hal` | L012 阻塞 HAL + runtime | **已发布** | `cw32l012-hal = "0.8"` | 本地 Cargo.toml **0.9.1**；README 徽章指向 crates.io/docs.rs；v0.9 生态特性（critical-section/embedded-io/defmt）已实机验证 |
-| `cw32l012-pac` | L012 PAC（手写） | **未发布**——名字被占 | path 依赖 | 本地 0.2.1；注册数据与 hal v0.9.1 的 pac 模块逐字节同源 |
-| `cw32-pacs` | 其余 10 家族 PAC | **发布待定** | git 依赖 | crates.io 发布"待与原厂确认商标/命名合作事宜后定档" |
-| `embassy-cw32` | 11 家族异步 HAL | **未发布** | git/path 依赖 | Cargo.toml 0.3.0；CHANGELOG 已定档 0.1.0/0.2.0（均 2026-10-24），"0.4.0 增量"段未发布 |
+| `cw32l012-hal` | L012 阻塞 HAL + runtime | **已发布** | `cw32l012-hal = "0.9.2"` | crates.io **0.9.2**（2026-11-14）；README 徽章指向 crates.io/docs.rs；v0.9 生态特性（critical-section/embedded-io/defmt）已实机验证 |
+| `cw32l012-pac-um` | L012 PAC（手写） | **已发布**（改名后） | `cw32l012-pac-um = "=0.3.0"` 精确钉版 | crates.io **0.3.0**（2026-11-14）；注册数据与 hal v0.9 的 pac 模块同源；原名 `cw32l012-pac` 被占，见下 |
+| `cw32-pacs` | 其余 10 家族 PAC | **已发布**（2026-11-14） | 版本依赖：8 家族用原名（`cw32f003-pac` 等，`=0.1.2`），F030/L010 改 `cw32f030-pac-um`/`cw32l010-pac-um` | 全部精确钉版 `=0.1.2`；升级必须手动改版本号 |
+| `embassy-cw32` | 11 家族异步 HAL | **未发布**（0.4.0 待定档） | git 依赖（发布后改版本依赖；本书 `examples/embassy` 即此写法） | CHANGELOG 已定档 0.1.0/0.2.0（均 2026-10-24）；未发布段已把全部家族 PAC 依赖切到 crates.io、critical-section 实现改由 cortex-m 提供 |
 | `cw32-bsp` | 11 家族板级模板 | 未发布 | git 依赖（`cw32f030-bsp = { git = … }`） | 无版本号口径，README 给出 git 用法 |
 | `cw32-probe-rs-compat` | probe-rs target YAML + 识别工具 | 工具仓（不发布库） | clone 使用 | `cw32-detect` 依赖 probe-rs 0.32.x 公开 API |
 
@@ -69,18 +72,24 @@ C SDK 是什么关系。版本信息以各仓 README/CHANGELOG 的口径为准�
 Cargo.toml；cw32l012-pac README（"Publishing note"、Verification 段）与
 Cargo.toml；cw32-pacs README（"发布状态"）；embassy-cw32 Cargo.toml 与
 CHANGELOG；cw32-bsp README（"用法"）；cw32-probe-rs-compat README
-（"已知限制"）。
+（"已知限制"）；各 crate 的 crates.io 发布记录（2026-11-14）。
 
-两个容易踩的名字陷阱：
+三个容易踩的名字陷阱：
 
-1. **crates.io 上的 `cw32l012_pac` 0.1.1 不是本书用的仓**。那是 svd2rust
-   v0.37.1 从厂商 SVD 生成的版本（2026-06-25 发布）。本书所用 `cw32l012-pac`
-   因这个名字被占，将来发布需换名（如 `cw32l012-pac-um`）——path 依赖不受
-   影响。SVD 版有三处已知缺陷（`GPIOx_PDR @ 0x0C` 缺失、`IRQ31 = FAULT`
-   缺失、`SYSCTRL.PLL @ 0x28` 残留），手写 PAC 已按 UM V1.4 纠正
-   （出处：cw32l012-pac README "Why not the cw32l012_pac 0.1.1"、
+1. **crates.io 上的 `cw32l012_pac` 0.1.1 不是本书生态的手写 PAC**。那是
+   svd2rust v0.37.1 从厂商 SVD 生成的版本（2026-06-25 发布），有三处已知
+   缺陷（`GPIOx_PDR @ 0x0C` 缺失、`IRQ31 = FAULT` 缺失、`SYSCTRL.PLL @ 0x28`
+   残留）。手写 PAC（按 UM V1.4 纠正）发布时改用 **`cw32l012-pac-um`**
+   （0.3.0）——在自己的工程里写成 `cw32l012-pac`（不带 `-um`）会拉到
+   缺陷版（出处：cw32l012-pac README "Why not the cw32l012_pac 0.1.1"、
    cw32l012-hal README "Register-level confidence"）。
-2. **`embassy-cw32` 的官方 GitHub 仓原名 `Cw32l012_embassy`**——cw32-bsp/
+2. **同名陷阱不止 L012 一个家族**：`cw32f030-pac`（第三方 cw32-rust，
+   svd2rust 生成）与 `cw32l010-pac`（第三方 Lioyae）也已占用，本生态的
+   对应 PAC 分别发布为 `cw32f030-pac-um`/`cw32l010-pac-um`（各 0.1.2）；
+   另有第三方 `cw32f030-hal`（nan-mu，2023 年起搁置的 svd2rust 生成项目）
+   与本生态无关——认准 [SunWithCloude](https://github.com/SunWithCloude)
+   名下的发布（出处：crates.io owners 页；embassy-cw32 Cargo.toml 头注）。
+3. **`embassy-cw32` 的官方 GitHub 仓原名 `Cw32l012_embassy`**——cw32-bsp/
    cw32-pacs 的 README 链接仍指向该地址，仓库内容即 11 家族异步 HAL
    （出处：cw32-bsp README 首行链接、cw32-pacs README 生态图）。
 
@@ -154,5 +163,16 @@ README "Related work"、CHANGELOG 0.2.0）。
   （出处：cw32-probe-rs-compat README 顶部注与"板上验证"）。F030 target
   PR #4549 已合并进上游（合并日期以 probe-rs 仓为准；出处：cw32-bsp
   README 生态图"均已上游合并"）。
-- **待定**：cw32-pacs 的 crates.io 档期；`cw32l012-pac` 换名发布；
-  embassy-cw32 0.4.0 定档（随 DMA/RTC 收尾）（出处：各仓 README/CHANGELOG）。
+- **2026-11-14**：**全家族 PAC 发布 crates.io**——8 家族用原名
+  （`cw32f003-pac`/`cw32f020-pac`/`cw32l011-pac`/`cw32l031-pac`/
+  `cw32l052-pac`/`cw32l083-pac`/`cw32r031-pac`/`cw32w031-pac`，各
+  0.1.2），三个名字被占的家族以 `-um` 后缀发布（`cw32f030-pac-um`/
+  `cw32l010-pac-um` 各 0.1.2、`cw32l012-pac-um` 0.3.0）；`cw32l012-hal`
+  0.9.2 同期发布。embassy-cw32 的家族 PAC 依赖全部切到 crates.io 版本
+  依赖（精确钉版），critical-section 实现改由 cortex-m 的
+  `critical-section-single-core` 提供（出处：crates.io 发布记录；
+  embassy-cw32 CHANGELOG 未发布段）。
+- **待定**：embassy-cw32 0.4.0 定档与 crates.io 发布（0.4.0 增量：经典
+  家族 UART/SPI DMA、全家族 ADC、经典 GTIM PWM/RTC/IWDT/WWDGT、L012
+  FLASH/OPA、I2C transaction）；cw32-bsp 发布档期（出处：各仓
+  README/CHANGELOG）。
