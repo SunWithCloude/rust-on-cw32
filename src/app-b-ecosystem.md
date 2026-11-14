@@ -65,7 +65,7 @@ crate 的原因，详见附录 C 条目 4（出处：embassy-cw32 README；CONVE
 | `cw32l012-pac-um` | L012 PAC（手写） | **已发布**（改名后） | `cw32l012-pac-um = "=0.3.0"` 精确钉版 | crates.io **0.3.0**（2026-11-14）；注册数据与 hal v0.9 的 pac 模块同源；原名 `cw32l012-pac` 被占，见下 |
 | `cw32-pacs` | 其余 10 家族 PAC | **已发布**（2026-11-14） | 版本依赖：8 家族用原名（`cw32f003-pac` 等，`=0.1.2`），F030/L010 改 `cw32f030-pac-um`/`cw32l010-pac-um` | 全部精确钉版 `=0.1.2`；升级必须手动改版本号 |
 | `embassy-cw32` | 11 家族异步 HAL | **已发布** | `embassy-cw32 = "=0.4.0"` 精确钉版 | crates.io **0.4.0**（2026-11-14）；家族 PAC 依赖全部版本钉版；critical-section 实现保留本仓 PRIMASK 版（`critical-section-impl` feature） |
-| `cw32-bsp` | 11 家族板级模板 | 未发布 | git 依赖（`cw32f030-bsp = { git = … }`） | 无版本号口径，README 给出 git 用法 |
+| `cw32-bsp` | 11 家族板级模板 | **已发布** | `cw32f030-bsp = "0.1.0"` + embassy-cw32 直依赖（家族 feature 互斥，须 `default-features = false`） | crates.io **0.1.0**（2026-11-14，11 crate 全家族）；家族 PAC 以显式版本依赖钉位面 |
 | `cw32-probe-rs-compat` | probe-rs target YAML + 识别工具 | 工具仓（不发布库） | clone 使用 | `cw32-detect` 依赖 probe-rs 0.32.x 公开 API |
 
 出处：cw32l012-hal README（crates.io 徽章、用法段、Roadmap v0.9 条）与
@@ -174,4 +174,5 @@ README "Related work"、CHANGELOG 0.2.0）。
 - **已落地**：embassy-cw32 0.4.0 发布 crates.io（2026-11-14；0.4.0 增量：
   经典家族 UART/SPI DMA、全家族 ADC、经典 GTIM PWM/RTC/IWDT/WWDGT、L012
   FLASH/OPA、I2C transaction、ATIM 互补 PWM 双代、l083 串行多实例）。
-- **待定**：cw32-bsp 发布档期（出处：各仓 README/CHANGELOG）。
+- **至此全部上 crates.io**：11 PAC + hal 0.9.2 + embassy-cw32 0.5.0 + 11 bsp
+  0.1.0——本书三例程仓与 bsp 用法全部只需 crates.io，无需克隆任何仓。
