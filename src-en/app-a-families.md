@@ -98,8 +98,8 @@ Before porting, first confirm that the target family has the modules you need
 |--------|------------------|-------|
 | `time_driver` / `bind_interrupts!` (the critical-section implementation is provided by cortex-m's `critical-section-single-core`, pulled in with the dependencies) | all 11 families | SysTick one-shot-alarm time driver (1 MHz tick); mis-bound interrupts fail at compile time |
 | `gpio` (async) | all 11 families | one shared IRQ per port; on l052/l083 the shared vectors `GPIOC_GPIOD`/`GPIOE_GPIOF` dispatch in pairs |
-| `uart` | all 11 families | L012/F030 have UART1/2/3; **the other families have UART1 only**; `BufferedUart` is available on every family |
-| `spi` | all 11 families | L012 has SPI1/2/3, F030 SPI1/2, the rest a single instance |
+| `uart` | all 11 families | L012/F030 have UART1/2/3; **l083 has UART1..6** (shared vectors UART1/4, UART2/5, UART3/6 dispatched as pairs); the other families have UART1 only; `BufferedUart` is available on every family |
+| `spi` | all 11 families | L012 has SPI1/2/3, F030 SPI1/2, **l083 SPI1/2**, the rest a single instance |
 | `i2c` | 10 of 11 (except L011) | L012 is command-FIFO style; the other 9 are classic state-machine style (F030 verified on hardware) |
 | `adc` | L012 + F030/F020 (from 0.4.0 on, all 11 families) | L012 has dual ADCs (including `vdda_mv()`/`temperature_mc()`); the classic group is a completely different IP, single-shot/4-result sequence |
 | `timer` (PWM / complementary PWM) | L012 + the 7 classic families (l010/l011 still missing) | GTIM edge-aligned PWM with a full scale of 10,000; the classic generation has no shadow registers, takes effect immediately. ATIM complementary PWM: `atim` (L012, ST-style BDTR dead time/brake) + `atim_classic` (f030, PWM2S/DTR double-buffered) — see Chapter 16 |

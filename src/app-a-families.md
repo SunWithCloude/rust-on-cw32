@@ -73,8 +73,8 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 |------|----------|------|
 | `time_driver` / `bind_interrupts!`（critical-section 实现由 cortex-m 的 `critical-section-single-core` 随依赖带上） | 全部 11 家族 | SysTick 单次闹钟时间驱动（1 MHz tick）；中断绑错编译期报错 |
 | `gpio`（异步） | 全部 11 家族 | 一端口一共享 IRQ；l052/l083 的共享向量 `GPIOC_GPIOD`/`GPIOE_GPIOF` 成对派发 |
-| `uart` | 全部 11 家族 | L012/F030 有 UART1/2/3，**其余家族只有 UART1**；`BufferedUart` 全家族可用 |
-| `spi` | 全部 11 家族 | L012 SPI1/2/3，F030 SPI1/2，其余单实例 |
+| `uart` | 全部 11 家族 | L012/F030 有 UART1/2/3，**l083 有 UART1..6**（共享向量 UART1/4、UART2/5、UART3/6 成对派发），其余家族只有 UART1；`BufferedUart` 全家族可用 |
+| `spi` | 全部 11 家族 | L012 SPI1/2/3，F030 SPI1/2，**l083 SPI1/2**，其余单实例 |
 | `i2c` | 10/11（L011 除外） | L012 命令 FIFO 式；其余 9 家经典状态机式（F030 已实板验证） |
 | `adc` | L012 + F030/F020（0.4.0 起补齐全部 11 家族） | L012 双 ADC（含 `vdda_mv()`/`temperature_mc()`）；经典组是完全不同的 IP，单发/4 结果序列 |
 | `timer`（PWM） | **仅 L012**（0.4.0 起经典 GTIM PWM 落地） | GTIM1-4 边沿对齐 PWM，万分比满量程；经典代无影子寄存器、立即生效 |
