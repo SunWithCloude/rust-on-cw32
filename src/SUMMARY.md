@@ -30,6 +30,7 @@
 - [第 13 章 RTC 与看门狗](ch13-rtc-wdt.md)
 - [第 14 章 I2C 与 SPI](ch14-i2c-spi.md)
 - [第 15 章 综合实战](ch15-capstone.md)
+- [第 16 章 互补 PWM 与刹车:ATIM 高级定时器](ch16-atim.md)
 
 # 附录
 

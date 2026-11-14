@@ -25,3 +25,7 @@ path = "examples/ch06_tim_dma.rs"
 [[example]]
 name = "ch06_rtc_iwdt"
 path = "examples/ch06_rtc_iwdt.rs"
+
+[[example]]
+name = "ch16_atim"
+path = "examples/ch16_atim.rs"
