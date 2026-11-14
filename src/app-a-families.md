@@ -83,7 +83,8 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 
 > **0.4.0 增量一句话版**（出处：embassy-cw32 CHANGELOG 未发布段）：经典家族
 > UART/SPI DMA、ADC 补齐全部 11 家族、经典 GTIM PWM、经典 RTC/IWDT/WWDGT、
-> L012 FLASH 驱动、L012 OPA、I2C transaction——这些是新驱动，本书正文暂不
+> L012 FLASH 驱动、L012 OPA、I2C transaction、ATIM 互补 PWM 双代（L012 `atim` +
+> f030 `atim_classic`，见第 16 章）——这些是新驱动，本书正文暂不
 > 展开，移植前先读该 CHANGELOG。
 
 实机验证记录（哪块板验证了什么）：
