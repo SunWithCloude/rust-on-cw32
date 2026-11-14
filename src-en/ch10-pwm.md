@@ -16,8 +16,8 @@ In this chapter you will learn:
 The CW32L012 has three tiers of timers: BTIM1–3 (basic), GTIM1–4
 (general-purpose), and ATIM (advanced). Part IV of this book only expands
 GTIM — it best represents the generic model of "timer = counter +
-comparator"; ATIM's complementary PWM and dead time are left for readers
-who need motor control to study on their own per manual §17. The GTIM
+comparator"; ATIM's complementary PWM and dead time get their own
+[Chapter 16](ch16-atim.md). The GTIM
 register surface is in the *CW32L012 User Manual* §16.
 
 One PWM output is decided by four registers (§16.10):
