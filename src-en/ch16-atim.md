@@ -14,8 +14,9 @@ In this chapter you will learn:
 This chapter's example (blocking HAL) corresponds to the `atim_deadtime`
 entry in the hal repo's TESTING.md — a **hardware-verified recipe**: the
 BDTR read-back, brake shutdown and full-range CNT all have measured data.
-The embassy `atim` driver will be added to this chapter once
-embassy-cw32 0.4.0 provides it.
+The embassy `atim` driver has landed in embassy-cw32 (main branch);
+this chapter now has both the blocking and the async example. Once
+0.4.0 is published, the book's git dependency switches to a version dep.
 
 ## Why a single PWM channel is not enough for a half-bridge
 
@@ -287,6 +288,217 @@ is gone); `re_enable_output()` restores.
   uses read-modify-write (`modify`) internally; if you touch registers
   by hand, remember BDTR is a multi-tenant register.
 
+## The embassy version: three-phase complementary with async cycle pacing
+
+The `atim` module of `embassy-cw32` (git dependency, main branch) brings
+the same ATIM capabilities into the async world: `AtimPwm::new` takes the
+**three complementary pairs + CH4 single-ended + brake pin** in one call;
+construction leaves MOE off (outputs idle low) and an explicit
+`enable()` starts the waveform. `wait_update().await` turns the PWM
+cycle boundary into an async beat via the update interrupt (IRQ13) — the
+same pattern as GTIM's `wait_update` in Chapter 10 (enable UIE only
+while waiting, mask it immediately on wake, no interrupt storms). The
+brake path is async-friendly too: the main loop polls `is_braked()`,
+then `clear_break()` + `enable()` recovers explicitly once the fault is
+gone (`aoe: false` in the config means the hardware never auto-recovers;
+the decision stays with the upper layer).
+
+Example `examples/embassy/examples/ch16_atim_async.rs`: 20 kHz
+three-phase complementary (six outputs, PA8/PA7, PA9/PB0, PA10/PB1, all
+AF7), 1 µs dead time (DTG=4 at 4 MHz), a 0→100%→0 triangle duty ramp
+offset by 120° between phases (a coarse space-vector look, not sinusoidal
+SVPWM), and PA6=BRK active-low braking.
+
+```rust
+//!       brake timing with a logic analyzer at low voltage first.//! Chapter 16 example (embassy): ATIM three-phase complementary PWM + dead time + brake.
+//!
+//! Same-source as embassy-cw32 examples/atim_motor.rs (20kHz three-phase complementary, 1µs dead time,
+//! three duties offset by 120° with a triangle ramp, `wait_update().await` pacing per PWM cycle,
+//! brake monitoring + explicit recovery). Note this is NOT sinusoidal SVPWM — the demo shows
+//! complementary outputs, dead time and cycle pacing only, not motor control.
+//!
+//! # Wiring (datasheet V1.0 Table 5-3, all AF7)
+//!
+//! | Signal | Pin | Signal | Pin |
+//! |------|------|------|------|
+//! | CH1  | PA8  | CH1N | PA7  |
+//! | CH2  | PA9  | CH2N | PB0  |
+//! | CH3  | PA10 | CH3N | PB1  |
+//! | BK   | PA6  | (brake input, active low, external pull-up) |
+//!
+//! Brake path: an overcurrent comparator (open-drain) pulls PA6 low → hardware
+//! **asynchronously** clears MOE → all six outputs enter the idle safe state at once
+//! (both switches off, no software/interrupt/dead-time logic involved). ISR.BIF
+//! sets (`is_braked()`); while the source is active BIF cannot be cleared
+//! (`clear_break()` returns false). After the fault is gone → `clear_break()` → `enable()` to recover
+//!
+//! # How to verify (a debugger reading statics is enough)
+//!
+//! - `PERIOD` records (PSC<<16 | ARR) — expected PSC=0, ARR=199
+//!   (20kHz @ PCLK 4MHz)
+//! - `DTG` records the DTG encoding — 1µs @ 4MHz = 4 ticks, expected 0x04
+//! - `UPDATES` grows linearly at ≈20000/s (wait_update really waits on the update interrupt)
+//! - `BRAKES`/`ENABLE_FAILS`: pull PA6 low then release — BRAKES+1,
+//!   ENABLE_FAILS+1 (enable() cannot set MOE while the brake is active); after release,
+//!   clear_break + enable restores the ramp
+//! - Scope: PA8/PA7 complementary square waves with a 1µs dead time (both low at the
+//!   hand-off), same for PA9/PB0 and PA10/PB1, offset by 120°
+//!
+//! Results live in SRAM statics, readable via `probe-rs read`.
+//!
+//! Build: cargo build --release --target thumbv6m-none-eabi --example ch16_atim_async -p cw32-book-embassy
+//! Status: compiles, not yet run on hardware; the driver is same-source as the blocking atim module (whose recipe
+//!       is hardware-verified in the hal repo TESTING.md atim_deadtime entry); the embassy driver is
+//!       compiles-not-run — do not attach a real motor before board testing; verify dead time and
+
+#![no_std]
+#![no_main]
+
+use embassy_executor::main;
+
+use cw32_book_embassy as _; // inherit the panic handler from lib.rs (same mechanism as panic-probe)
+use embassy_cw32::{
+    Config, Peripherals,
+    atim::{AtimError, AtimPwm, AtimPwmConfig},
+    gpio::Pin,
+};
+
+// wait_update needs the ATIM update interrupt (IRQ13)
+embassy_cw32::bind_interrupts!(struct Irqs {
+    ATIM => embassy_cw32::atim::AtimIrq;
+});
+
+/// (PSC<<16 | ARR) configuration read-back (expected PSC=0, ARR=199)
+#[used]
+#[unsafe(no_mangle)]
+pub static mut PERIOD: u32 = 0;
+/// DTG encoding read-back (expected 0x04 = 4 ticks for 1µs at 4MHz)
+#[used]
+#[unsafe(no_mangle)]
+pub static mut DTG: u32 = 0;
+/// Completed wait_update calls (expected ≈20000/s)
+#[used]
+#[unsafe(no_mangle)]
+pub static mut UPDATES: u32 = 0;
+/// Brake entries (PA6 pulled-low events)
+#[used]
+#[unsafe(no_mangle)]
+pub static mut BRAKES: u32 = 0;
+/// Failed enable() calls while the brake is active (MOE cannot be set)
+#[used]
+#[unsafe(no_mangle)]
+pub static mut ENABLE_FAILS: u32 = 0;
+/// Construction error code: 0=none 1=FreqOutOfRange 2=DeadTimeTooLong 3=BadBreakConfig
+/// 4=BadDuty
+#[used]
+#[unsafe(no_mangle)]
+pub static mut ERR: u32 = 0;
+
+/// Triangle duty cycle (basis points): 0 → 10000 → 0, 200 steps per cycle
+fn ramp(step: u32) -> u16 {
+    let s = step % 200;
+    let v = if s < 100 { s * 100 } else { (200 - s) * 100 };
+    (v.min(10_000)) as u16
+}
+
+#[main]
+async fn main(_spawner: embassy_executor::Spawner) {
+    embassy_cw32::init(Config::default()); // reset defaults SysClk/PCLK = 4MHz
+
+    let p = Peripherals::take().unwrap();
+
+    // GPIOA (bit4: PA6-PA10) + GPIOB (bit5: PB0/PB1) port clocks — KEY-protected
+    // register written whole-word in one shot; two writes would clobber each other (Chapter 2 pitfall)
+    p.sysctrl
+        .ahben
+        .write(embassy_cw32::SYSCTRL_KEY | (1 << 4) | (1 << 5));
+
+    // three complementary pairs + dead time + brake (pins/AF per the header wiring table)
+    // unused channels take None: the APIT port type cannot be inferred from None, annotate it
+    let no_pin: Option<(Pin<embassy_cw32::Gpio>, u8)> = None;
+    let pwm = AtimPwm::new(
+        p.atim,
+        AtimPwmConfig {
+            freq_hz: 20_000,     // 20kHz carrier (ARR=199 at 4MHz PCLK)
+            dead_time_ns: 1_000, // 1µs dead time (4 ticks, rounded up)
+            aoe: false,          // no automatic brake recovery — explicit clear_break + enable
+        },
+        Some((Pin::new(p.gpioa, 8), 7)),  // CH1  = PA8  AF7
+        Some((Pin::new(p.gpioa, 7), 7)),  // CH1N = PA7  AF7
+        Some((Pin::new(p.gpioa, 9), 7)),  // CH2  = PA9  AF7
+        Some((Pin::new(p.gpiob, 0), 7)),  // CH2N = PB0  AF7
+        Some((Pin::new(p.gpioa, 10), 7)), // CH3  = PA10 AF7
+        Some((Pin::new(p.gpiob, 1), 7)),  // CH3N = PB1  AF7
+        no_pin,                           // CH4 single-ended (unused here)
+        Some((Pin::new(p.gpioa, 6), 7)),  // BK   = PA6  AF7 (active low)
+        false,                            // BKP=0: active low
+        0,                                // BKF=0: no digital filter
+        Irqs,
+    );
+    let mut pwm = match pwm {
+        Ok(t) => t,
+        Err(e) => {
+            unsafe {
+                ERR = match e {
+                    AtimError::FreqOutOfRange => 1,
+                    AtimError::DeadTimeTooLong => 2,
+                    AtimError::BadBreakConfig => 3,
+                    AtimError::BadDuty => 4,
+                };
+            }
+            loop {
+                core::hint::spin_loop();
+            }
+        }
+    };
+
+    let (psc, arr) = pwm.period_config();
+    unsafe {
+        PERIOD = (psc as u32) << 16 | arr as u32;
+        DTG = pwm.dtg() as u32;
+    }
+
+    // Set MOE: it is 0 after construction (outputs idle low). If BK is already active
+    if !pwm.enable() {
+        unsafe { ENABLE_FAILS += 1 };
+    }
+
+    // Duty triangle 0→100%→0, three phases offset by 120° (basis points 3334/6667):
+    // not sinusoidal — demonstrates three-phase complementary output and the 120° look
+    let mut step: u32 = 0;
+    loop {
+        let d = ramp(step);
+        pwm.set_duty_bp(1, d).ok();
+        pwm.set_duty_bp(2, (d + 3_334) % 10_000).ok();
+        pwm.set_duty_bp(3, (d + 6_667) % 10_000).ok();
+
+        // Wait one real PWM cycle (ATIM update interrupt + waker async path)
+        pwm.wait_update().await;
+        unsafe { UPDATES += 1 };
+
+        // Brake monitor: BIF set means hardware already pushed all six outputs to the safe state (MOE=0).
+        // clear_break returns false while the brake source is active; re-enable after release.
+        if pwm.is_braked() {
+            unsafe { BRAKES += 1 };
+            if pwm.clear_break() && !pwm.enable() {
+                unsafe { ENABLE_FAILS += 1 };
+            }
+        }
+        step += 1;
+    }
+}
+```
+
+Expected read-backs: `PERIOD` = `0x00C7_0000` (PSC=0, ARR=199),
+`DTG` = `0x04`, `UPDATES` ≈ 20000/s. Pulling PA6 low and releasing it
+shows `BRAKES`/`ENABLE_FAILS` incrementing and the ramp recovering.
+
+⚠ Status: the **embassy driver is compiles-not-run** (board validation
+pending) — do not attach a real motor before board testing; verify dead
+time and brake timing with a logic analyzer at low voltage. The blocking
+recipe (`cw32l012-hal` `atim_deadtime`) is hardware-measured, and the
+register semantics are the same in both.
+
 ## Exercises
 
 1. If the example's dead-time request changes to 300 µs (above the
@@ -301,7 +513,3 @@ is gone); `re_enable_output()` restores.
 3. With RCR (repetition counter) = 4, update events come at 1/5 the
    rate. What does that buy a three-phase FOC controller that refreshes
    all duty cycles once per period?
-
-The embassy complementary PWM (`atim` module, `wait_update` async
-pacing + three-phase complementary) ships with embassy-cw32 0.4.0; the
-embassy section will be added to this chapter then.
