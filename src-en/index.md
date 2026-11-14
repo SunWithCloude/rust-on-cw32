@@ -7,7 +7,7 @@ This book teaches embedded Rust on the **CW32 series of microcontrollers from CM
 ## Why the CW32L012
 
 - **Small, and real**: an M0+ core with 64K/8K of memory gives exactly the learning curve of a "first microcontroller" — yet the chip carries real peripherals such as DMA, a dual ADC, DAC, RTC, and watchdogs, so it can do actual work once you have learned it.
-- **A complete Rust ecosystem chain**: a register access layer (`cw32l012-pac`, transcribed item by item from User Manual V1.4), a blocking HAL (`cw32l012-hal`, zero dependencies with its own runtime), and an async HAL (`embassy-cw32`, the embassy executor plus a SysTick time driver). All three layers star in this book, and all three are real open-source projects under [SunWithCloude](https://github.com/SunWithCloude).
+- **A complete Rust ecosystem chain**: a register access layer (`cw32l012-pac-um`, transcribed item by item from User Manual V1.4, published on crates.io), a blocking HAL (`cw32l012-hal`, zero dependencies with its own runtime, published on crates.io), and an async HAL (`embassy-cw32`, the embassy executor plus a SysTick time driver). All three layers star in this book, and all three are real open-source projects under [SunWithCloude](https://github.com/SunWithCloude).
 - **Every example compiles**: every piece of code in the book corresponds to a real example file under `examples/` in this repository, kept compiling by CI on `thumbv6m-none-eabi`. Examples verified on hardware are labeled as such; examples that only compile and have not run on a board are labeled as such too — no fudging.
 
 ## What You Need

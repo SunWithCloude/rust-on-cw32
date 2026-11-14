@@ -80,5 +80,7 @@ cargo build --workspace --target thumbv6m-none-eabi --release --examples
 mdbook build          # 需要 cargo install mdbook
 ```
 
-生态依赖按路径挂在本仓上一级（`../../..`）：`cw32l012-pac`、  
-`cw32l012-hal/cw32l012-hal`、`embassy-cw32`。
+生态依赖走 crates.io 版本依赖（`cw32l012-pac-um = "=0.3.0"`、
+`cw32l012-hal = "0.9.2"`）与 git 依赖（`embassy-cw32`，未发布）——
+不需要克隆生态仓。要改生态源码，用 `[patch.crates-io]` 指回本地检出
+（见第 1 章）。

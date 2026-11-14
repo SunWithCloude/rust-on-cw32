@@ -50,9 +50,9 @@ panic 信息的话，把第 3 章的 rprintln 搬进 lib 即可。
 
 全部关掉（`default-features = false`）就回到零依赖的裸寄存器形态。
 
-**版本口径**：crates.io 上已发布 `0.8`；本书例程用仓库路径版 **0.9.x**
-（`examples/hal/Cargo.toml` 以 `path` 指向生态仓），两者 API 一致，
-0.9 主要是补生态对接与实机验证，不改变既有签名。
+**版本口径**：crates.io 已发布 **0.9.2**，本书例程直接用这个版本
+（`examples/hal/Cargo.toml`：`cw32l012-hal = "0.9.2"`）。0.9 主要是补
+生态对接与实机验证，不改变既有签名。
 
 ## 4.2 所有权模型：Peripherals::take()
 

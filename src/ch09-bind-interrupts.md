@@ -15,7 +15,8 @@
 
 硬件层面，Cortex-M0+ 复位后从向量表（`__INTERRUPTS`，由 cortex-m-rt 铺设）
 取每个异常/中断的入口地址。CW32L012 有 32 个外设中断槽位，PAC 的 `rt`
-feature 在构建脚本里为每个槽位生成一条弱别名（`cw32l012-pac` `build.rs`）：
+feature 在构建脚本里为每个槽位生成一条弱别名（`cw32l012-pac-um`
+`build.rs`）：
 
 ```text
 PROVIDE(GPIOA = DefaultHandler);

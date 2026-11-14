@@ -14,7 +14,7 @@
 
 use cortex_m_rt::entry;
 use cw32_book_pac::board::{Led, delay_ms};
-use cw32l012_pac::Peripherals;
+use cw32l012_pac_um::Peripherals;
 
 #[entry]
 fn main() -> ! {

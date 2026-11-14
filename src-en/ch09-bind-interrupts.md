@@ -21,7 +21,7 @@ At the hardware level, after reset the Cortex-M0+ fetches the entry address of
 every exception/interrupt from the vector table (`__INTERRUPTS`, laid down by
 cortex-m-rt). The CW32L012 has 32 peripheral interrupt slots; the PAC's `rt`
 feature generates one weak alias per slot in its build script
-(`cw32l012-pac` `build.rs`):
+(`cw32l012-pac-um` `build.rs`):
 
 ```text
 PROVIDE(GPIOA = DefaultHandler);

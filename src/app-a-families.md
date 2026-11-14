@@ -11,16 +11,19 @@ embassy-cw32 与 cw32-bsp 覆盖武汉芯源 CW32 全部 **11 个 Cortex-M0+ 家
 
 ## A.1 家族矩阵
 
-**PAC 来源**分两类：CW32L012 的 `cw32l012-pac` 是**手写**——逐项转录自《CW32L012
-用户手册》V1.4，与官方 SVD 逐项纠错（出处：cw32l012-pac README）；其余 10 个家族
-的 PAC 由 `cw32-pac-gen` 从**原厂 SDK 头文件生成**，一个家族一个 crate
-（出处：cw32-pacs README）。
+**PAC 来源**分两类：CW32L012 的 `cw32l012-pac-um` 是**手写**——逐项转录自
+《CW32L012 用户手册》V1.4，与官方 SVD 逐项纠错（出处：cw32l012-pac README）；
+其余 10 个家族的 PAC 由 `cw32-pac-gen` 从**原厂 SDK 头文件生成**，一个家族
+一个 crate（出处：cw32-pacs README）。全部 11 家族 PAC 已发布 crates.io
+（2026-11-14）：8 家族用原名，L012/F030/L010 三家族因原名被第三方占用，
+以 `-um` 后缀（User Manual，手写/生成转录版）发布——下表"PAC crate"列
+一律写 crates.io 正式名（命名故事见附录 B）。
 
 | 家族 | PAC crate | Flash/SRAM | embassy feature 名 | 复位默认时钟 | 门控 KEY（0x5A5A） | DMA 通道 | I2C | PAC 收编 GPIO 端口 |
 |------|-----------|-----------|--------------------|--------------|--------------------|----------|-----|--------------------|
-| CW32L010 | `cw32l010-pac`（生成） | 64K/4K | `cw32l010` | **4 MHz** | 有 | 无 | 有 | A, B |
+| CW32L010 | `cw32l010-pac-um`（生成；原名被占） | 64K/4K | `cw32l010` | **4 MHz** | 有 | 无 | 有 | A, B |
 | CW32L011 | `cw32l011-pac`（生成） | 64K/6K | `cw32l011` | **4 MHz** | 有 | 无 | **无硬件** | A, B, C |
-| CW32L012 | `cw32l012-pac`（**手写**，UM V1.4 转录） | 64K/8K | `cw32l012`（默认） | **4 MHz** | 有 | **4** | 有（命令 FIFO 控制器） | A, B, C, F |
+| CW32L012 | `cw32l012-pac-um`（**手写**，UM V1.4 转录；原名被占） | 64K/8K | `cw32l012`（默认） | **4 MHz** | 有 | **4** | 有（命令 FIFO 控制器） | A, B, C, F |
 | CW32L031 | `cw32l031-pac`（生成） | 64K/8K | `cw32l031` | 8 MHz | 无 | 4（L031 组） | 有（经典状态机） | A, B, C, F |
 | CW32L052 | `cw32l052-pac`（生成） | 64K/8K | `cw32l052` | 8 MHz | 无 | 4（L031 组） | 有（经典状态机） | A, B, C, D, F |
 | CW32L083 | `cw32l083-pac`（生成） | 256K/24K | `cw32l083` | 8 MHz | 无 | **5** | 有（经典状态机） | A, B, C, D, E, F |
@@ -28,7 +31,7 @@ embassy-cw32 与 cw32-bsp 覆盖武汉芯源 CW32 全部 **11 个 Cortex-M0+ 家
 | CW32W031 | `cw32w031-pac`（生成） | 64K/8K | `cw32w031` | 8 MHz | 无 | 4（L031 组） | 有（经典状态机） | A, B, C, F |
 | CW32F003 | `cw32f003-pac`（生成） | 20K/3K | `cw32f003` | 8 MHz | 无 | 无 | 有（中断名 `I2C` 无数字） | A, B, C |
 | CW32F020 | `cw32f020-pac`（生成） | 32K/8K | `cw32f020` | 8 MHz | 无 | 5（ch4/5 无 NVIC 线，仅轮询） | 有（经典状态机） | A, B, C, F |
-| CW32F030 | `cw32f030-pac`（生成） | 64K/8K | `cw32f030` | 8 MHz | 无（见 A.2 脚注） | **5** | 有（经典状态机，**实板验证**） | A, B, C, F |
+| CW32F030 | `cw32f030-pac-um`（生成；原名被占） | 64K/8K | `cw32f030` | 8 MHz | 无（见 A.2 脚注） | **5** | 有（经典状态机，**实板验证**） | A, B, C, F |
 
 各列出处：
 
@@ -68,15 +71,20 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 
 | 模块 | 覆盖家族 | 说明 |
 |------|----------|------|
-| `time_driver` / `bind_interrupts!` / `critical-section-impl` | 全部 11 家族 | SysTick 单次闹钟时间驱动（1 MHz tick）；中断绑错编译期报错 |
+| `time_driver` / `bind_interrupts!`（critical-section 实现由 cortex-m 的 `critical-section-single-core` 随依赖带上） | 全部 11 家族 | SysTick 单次闹钟时间驱动（1 MHz tick）；中断绑错编译期报错 |
 | `gpio`（异步） | 全部 11 家族 | 一端口一共享 IRQ；l052/l083 的共享向量 `GPIOC_GPIOD`/`GPIOE_GPIOF` 成对派发 |
 | `uart` | 全部 11 家族 | L012/F030 有 UART1/2/3，**其余家族只有 UART1**；`BufferedUart` 全家族可用 |
 | `spi` | 全部 11 家族 | L012 SPI1/2/3，F030 SPI1/2，其余单实例 |
 | `i2c` | 10/11（L011 除外） | L012 命令 FIFO 式；其余 9 家经典状态机式（F030 已实板验证） |
-| `adc` | L012 + F030/F020 | L012 双 ADC（含 `vdda_mv()`/`temperature_mc()`）；经典组是完全不同的 IP，单发/4 结果序列 |
-| `timer`（PWM） | **仅 L012** | GTIM1-4 边沿对齐 PWM，万分比满量程 |
-| `rtc` / `wdt` / `dac` | **仅 L012** | roadmap 中列为"not yet supported"（出处：embassy-cw32 README Roadmap） |
+| `adc` | L012 + F030/F020（0.4.0 起补齐全部 11 家族） | L012 双 ADC（含 `vdda_mv()`/`temperature_mc()`）；经典组是完全不同的 IP，单发/4 结果序列 |
+| `timer`（PWM） | **仅 L012**（0.4.0 起经典 GTIM PWM 落地） | GTIM1-4 边沿对齐 PWM，万分比满量程；经典代无影子寄存器、立即生效 |
+| `rtc` / `wdt` / `dac` | **仅 L012**（0.4.0 起 rtc/wdt 补齐经典代） | 经典代为 `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt`（另一套 IP）；`dac` 仍仅 L012 |
 | `dma` | L012（`Dma`）+ 经典 7 家族（`ClassicDma`） | F003/L010/L011 无 DMA 硬件，自然无驱动 |
+
+> **0.4.0 增量一句话版**（出处：embassy-cw32 CHANGELOG 未发布段）：经典家族
+> UART/SPI DMA、ADC 补齐全部 11 家族、经典 GTIM PWM、经典 RTC/IWDT/WWDGT、
+> L012 FLASH 驱动、L012 OPA、I2C transaction——这些是新驱动，本书正文暂不
+> 展开，移植前先读该 CHANGELOG。
 
 实机验证记录（哪块板验证了什么）：
 
@@ -102,24 +110,26 @@ embassy-cw32 靠互斥 feature 选家族（出处：embassy-cw32 README）：
 
 ```toml
 [dependencies]
-embassy-cw32 = { path = "../embassy-cw32", features = ["rt"] }
+embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", branch = "main", features = ["rt"] }
 # F030：关掉默认 feature（默认是 cw32l012），改开 cw32f030
-# embassy-cw32 = { path = "../embassy-cw32",
-#   default-features = false,
-#   features = ["rt", "cw32f030", "critical-section-impl"] }
+# embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy",
+#   branch = "main", default-features = false,
+#   features = ["rt", "cw32f030"] }
+# （embassy-cw32 发布 crates.io 后改回版本依赖即可）
 ```
 
 命令行等价形式（出处：embassy-cw32 README "F030 family notes"）：
 
 ```bash
 cargo build --target thumbv6m-none-eabi --release \
-  --no-default-features --features "rt,cw32f030,critical-section-impl"
+  --no-default-features --features "rt,cw32f030"
 ```
 
-PAC 随 feature 自动切换：L012 用 `cw32l012-pac`（需在 `embassy-cw32` 旁边
-放置同名 checkout），其余 10 家用 `cw32-pacs` 里的对应 crate（路径
-`../cw32-pacs/crates/<family>-pac`）（出处：embassy-cw32 README "Getting
-started"）。
+PAC 随 feature 自动切换，全部走 crates.io 版本依赖：L012 用
+`cw32l012-pac-um`（`=0.3.0`）、F030/L010 用 `cw32f030-pac-um`/
+`cw32l010-pac-um`，其余 8 家用原名（如 `cw32f003-pac`、`cw32l031-pac`，
+全部 `=0.1.2` 精确钉版）——不需要克隆任何 PAC 仓（出处：embassy-cw32
+README "Getting started" 与 Cargo.toml）。
 
 阻塞侧没有得选：`cw32l012-hal` **只覆盖 L012**，本书第二部分例程无法直接
 "换 feature" 移植到其他家族——阻塞 HAL 目前就是 L012 专属
@@ -197,11 +207,11 @@ let mut led = Output::new(Pin::new(p.gpioa, 0), Level::High); // PA0
 
 ### 第 7 步：L012 独占模块的去留
 
-`timer`（PWM）、`rtc`、`wdt`、`dac` 目前**仅 L012**（出处：embassy-cw32
-README Roadmap）；ADC 在经典组只有 F030/F020 有驱动，L031 组/F003/L010/L011
-的 ADC 是"另外的 IP，未接线"（出处：embassy-cw32 CHANGELOG 经典组 ADC 条）。
-移植含这些外设的章节（第 10/11/13 章）到非 L012 家族时，要么改走寄存器层
-（对应家族 PAC），要么等驱动落地。
+`timer`（PWM）、`rtc`、`wdt`、`dac` 的 L012 版本书里逐章展开；0.4.0 起
+embassy-cw32 为经典代补齐了 GTIM PWM、RTC、IWDT/WWDGT，并给全部 11 家族
+配了 ADC 驱动（出处：embassy-cw32 CHANGELOG 未发布段），本书正文尚未
+覆盖这些新驱动。移植第 10/11/13 章到非 L012 家族时，要么改走寄存器层
+（对应家族 PAC），要么直接改用新驱动（以该 CHANGELOG/README 为准）。
 
 ### 第 8 步：烧录与调试参数
 

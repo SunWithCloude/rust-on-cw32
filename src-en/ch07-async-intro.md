@@ -348,10 +348,11 @@ the on-board record in the ecosystem repo embassy-cw32.
   `sysctrl_enable_gpioX` family is a key-protected whole-word write (upper 16
   bits must be 0x5A5A); the second write clears the first one's bits. Enable
   both ports in a single write (demonstrated in the Chapter 8 example).
-- **Mixing two critical-section implementations**: `embassy-cw32` (enabled by
-  default) and `cw32l012-hal`'s `critical-section-impl` cannot coexist in one
-  firmware; the link fails. This book isolates them with separate example
-  crates.
+- **Mixing two critical-section implementations**: the embassy side's
+  implementation (cortex-m's `critical-section-single-core`, pulled in
+  automatically with the dependencies) and `cw32l012-hal`'s
+  `critical-section-impl` cannot coexist in one firmware; the link fails.
+  This book isolates them with separate example crates.
 - **Very short timers fire late**: alarms closer than 100 systicks (25µs at
   4MHz) may be that much late, never early. Irrelevant for millisecond-scale
   periods.

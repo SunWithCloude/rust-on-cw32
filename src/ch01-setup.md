@@ -6,7 +6,8 @@
   `thumbv6m-none-eabi`；
 - 安装烧录与调试工具 probe-rs，认识你手里的调试器；
 - 配好带 `rust-analyzer` 的编辑器；
-- 理解本书仓库与三个生态仓库的目录布局约定，弄清 `path` 依赖为什么这么挂；
+- 认识三个生态依赖怎么声明——crates.io 精确钉版 + git 依赖，
+  **跑通本书不需要克隆任何仓库**；
 - 用一条命令验证整个环境：把书里全部例程编译成 Cortex-M0+ 固件。
 
 本章没有固件例程——目标是结束时，第 2 章的 `ch02_blink` 已经能一键编译。
@@ -96,64 +97,64 @@ probe-rs list
 断点、看变量都在编辑器里完成。第 2、3 章只用命令行就够，这个扩展到第 7 章
 以后再装也不迟。
 
-## 仓库布局：一本书带三个生态仓
+## 生态依赖：三行声明，不需要克隆任何仓库
 
-本书的例程不把依赖打包在自己怀里，而是直接引用三个生态仓库的源码：
+本书例程的三个生态依赖（第 4 章起逐个登场），来源与版本口径如下：
 
-| 仓库 | 角色 | 本书引用方式 |
-|------|------|--------------|
-| `cw32l012-pac` | 寄存器访问层（PAC） | `examples/pac` 例程 crate |
-| `cw32l012-hal` | 阻塞式 HAL（crate 在仓库内同名子目录） | `examples/hal` 例程 crate |
-| `embassy-cw32` | 异步 HAL | `examples/embassy` 例程 crate |
+| 依赖 | 角色 | 版本与引入方式 |
+|------|------|----------------|
+| `cw32l012-pac-um` | 寄存器访问层（PAC） | crates.io，精确钉版 `=0.3.0` |
+| `cw32l012-hal` | 阻塞式 HAL（crate 在仓库内同名子目录） | crates.io，`"0.9.2"` |
+| `embassy-cw32` | 异步 HAL | git 依赖（尚未发布 crates.io） |
 
-约定它们与本书仓库**平级**放置（下例以 `book/` 代指你放代码的任意目录）：
-
-```text
-book/
-├── rust-on-cw32/          # 本书仓库（本仓）
-│   └── examples/pac/Cargo.toml
-├── cw32l012-pac/          # PAC：仓库根就是 crate
-├── cw32l012-hal/          # HAL：仓库根下套一层同名 crate 目录
-│   └── cw32l012-hal/
-└── embassy-cw32/          # 异步 HAL：仓库根就是 crate
-```
-
-克隆时照这个位置放即可：
+**结论先行：跑通本书不需要克隆任何生态仓库。** 三个依赖全部由 cargo
+自动拉取。装好 Rust 后，你在任何目录都可以这样起步自己的工程：
 
 ```bash
-cd book
-git clone https://github.com/SunWithCloude/rust-on-cw32
-git clone https://github.com/SunWithCloude/cw32l012-pac
-git clone https://github.com/SunWithCloude/cw32l012-hal
-git clone https://github.com/SunWithCloude/embassy-cw32
+cargo new my-first-cw32
+cd my-first-cw32
+cargo add cw32l012-pac-um
 ```
 
-## path 依赖为什么这么挂
+`cargo add cw32l012-pac-um` 就把寄存器层装进了 `Cargo.toml`——PAC 是
+零依赖的纯寄存器层，一条命令即用。（名字里的 `-um` 后缀：crates.io 上
+`cw32l012_pac` 已被第三方 svd2rust 缺陷版占用，手写转录版改名发布，
+故事见附录 B。）
 
-打开 `examples/pac/Cargo.toml`，依赖是这样写的：
+三个例程 crate（`examples/pac`、`examples/hal`、`examples/embassy`）
+的依赖声明就是这三行（第 2 章起逐个拆解）：
 
 ```toml
-[dependencies]
-cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
+# examples/pac/Cargo.toml
+cw32l012-pac-um = { version = "=0.3.0", features = ["rt"] }
+
+# examples/hal/Cargo.toml
+cw32l012-hal = "0.9.2"
+
+# examples/embassy/Cargo.toml
+embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", branch = "main", features = ["rt"] }
 ```
 
-`../../../` 从 `examples/pac/` 出发向上三级，正好落在 `book/`——也就是
-三个生态仓的平级位置。Cargo 的 `path` 依赖按**相对当前 Cargo.toml 的路径**
-解析，所以只要克隆时保持平级布局，一切直接可用，不需要额外安装任何
-生态组件。
+两个口径说明：
 
-这样设计有两个理由：
+- **为什么 PAC 用 `=` 精确钉版**：寄存器层的任何"自动升级"都可能悄悄
+  改变位段假设（位面错一位，整个固件的行为全变），升级必须手动改版本
+  号并重跑全部例程。HAL 用正常 semver（`0.9.2`）即可。embassy-cw32
+  走 git 依赖是因为它还没在 crates.io 发布（0.4.0 待定档）——发布后
+  建议改回版本依赖。
+- **想改生态仓源码的开发者**：把生态仓克隆到任意位置，在**自己工程根的
+  `Cargo.toml`** 加一段 `[patch.crates-io]`，把 crates.io 依赖指回本地
+  检出（本书写作期就是用这个办法边改边验证的）：
 
-- **改一行立刻见效**。本书大量讲解 PAC/HAL 的实现细节（比如第 2 章逐行拆
-  KEY 写保护的写序列），你在生态仓源码里加一行注释、打个标记，重新编译
-  例程就能观察变化——发布到 crates.io 的依赖做不到这一点。
-- **版本永远跟着仓库走**。三个生态仓演进很快（HAL 还在快速补外设），
-  path 依赖让"书的代码"与"仓库的代码"永远是同一份，不会出现"书上是
-  v0.9 的 API、crates.io 上已经是 v1.0"的错位。
+```toml
+[patch.crates-io]
+cw32l012-pac-um = { path = "../cw32l012-pac" }
+cw32l012-hal = { path = "../cw32l012-hal/cw32l012-hal" }
+embassy-cw32 = { path = "../embassy-cw32" }
+```
 
-代价是克隆位置必须正确。如果你把生态仓放到了别处，编译会报
-`failed to load source for dependency ... cw32l012-pac`——把目录挪回平级
-位置即可，或者在例程 crate 的 `Cargo.toml` 里把 `path` 改成你的实际位置。
+改一行源码、重新编译例程，立刻见效——这是只读的版本依赖给不了的
+工作流，但它属于进阶玩法，书里的例程一概不依赖它。
 
 ## 验收：一次编译全部例程
 
@@ -195,9 +196,13 @@ cargo build --release --target thumbv6m-none-eabi --example ch02_blink -p cw32-b
   目标的核心库没装，回第 2 节补上即可。
 - **`cargo install probe-rs-tools` 不带 `--locked`**：依赖解析可能失败，
   官方明确要求带 `--locked`。
-- **生态仓没放在平级位置**：报 `failed to load source for dependency`，
-  按上文布局挪目录或改 `path`。
-- **首次编译很慢**：是正常的——三个生态仓在为 M0+ 完整编译一遍，之后
+- **依赖写成 `cw32l012-pac`（漏了 `-um`）**：cargo 会拿到 crates.io 上
+  同名的第三方 svd2rust 缺陷版（API 对不上，三处寄存器缺陷）——本生态
+  的手写 PAC 名叫 `cw32l012-pac-um`，见附录 B 的命名故事。
+- **首次构建 embassy 例程卡在更新 git 依赖**：`embassy-cw32` 走 git
+  依赖，首次解析要联网 clone GitHub 仓，离线环境请先在有网的机器上
+  `cargo fetch`。
+- **首次编译很慢**：是正常的——三个生态依赖在为 M0+ 完整编译一遍，之后
   增量编译都是秒级。
 - **WSL 里装了 rustup、Windows 里装了 probe-rs（或反过来）**：两套环境
   互看不见，选一边装齐。

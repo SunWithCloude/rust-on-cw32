@@ -8,10 +8,11 @@
 
 - **够小，够真**：M0+ 核、64K/8K 的容量，和市面上"第一个单片机"的学习曲线
   完全一致；但它又有 DMA、双 ADC、DAC、RTC、看门狗这些"真外设"，学完能干活。
-- **一条完整的 Rust 生态链**：寄存器层（`cw32l012-pac`，逐项转录自用户手册
-  V1.4）、阻塞式 HAL（`cw32l012-hal`，自带运行时零依赖）、异步 HAL
-  （`embassy-cw32`，embassy 执行器 + SysTick 时间驱动）。三层都是本书的主角，
-  也是开源仓库 [SunWithCloude](https://github.com/SunWithCloude) 下的真实项目。
+- **一条完整的 Rust 生态链**：寄存器层（`cw32l012-pac-um`，逐项转录自用户
+  手册 V1.4，crates.io 已发布）、阻塞式 HAL（`cw32l012-hal`，自带运行时
+  零依赖，crates.io 已发布）、异步 HAL（`embassy-cw32`，embassy 执行器 +
+  SysTick 时间驱动）。三层都是本书的主角，也是开源仓库
+  [SunWithCloude](https://github.com/SunWithCloude) 下的真实项目。
 - **所有例程可编译**：书里出现的每一段代码都对应本仓库
   `examples/` 下的一个真实例程文件，由 CI 在 `thumbv6m-none-eabi` 上持续编译。
   实机验证过的例程会明确标注，只编译过没上板的也会明确标注——不糊弄。

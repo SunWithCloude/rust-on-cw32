@@ -11,23 +11,25 @@
 
 | 仓库 | 角色 |
 |------|------|
-| [Cw32l012_pac](https://github.com/SunWithCloude/Cw32l012_pac) | L012 寄存器层（手写转录自用户手册 V1.4） |
+| [Cw32l012_pac](https://github.com/SunWithCloude/Cw32l012_pac) | L012 寄存器层（手写转录自用户手册 V1.4；crates.io 名 `cw32l012-pac-um`） |
 | [Rust_Cw32L012](https://github.com/SunWithCloude/Rust_Cw32L012) | `cw32l012-hal` 阻塞式 HAL（自带运行时，crates.io 已发布） |
-| [Cw32l012_embassy](https://github.com/SunWithCloude/Cw32l012_embassy) | `embassy-cw32` 异步 HAL（11 家族，embassy 执行器） |
-| [cw32-pacs](https://github.com/SunWithCloude/cw32-pacs) | 其余 10 家族的 PAC |
+| [Cw32l012_embassy](https://github.com/SunWithCloude/Cw32l012_embassy) | `embassy-cw32` 异步 HAL（11 家族，embassy 执行器；暂走 git 依赖） |
+| [cw32-pacs](https://github.com/SunWithCloude/cw32-pacs) | 其余 10 家族的 PAC（crates.io 已发布，3 家族改 `-um` 名） |
 | [cw32-bsp](https://github.com/SunWithCloude/cw32-bsp) | 11 家族 BSP（引脚映射 + 工程模板） |
 
 ## 本地构建
 
-```bash
-# 生态依赖按路径挂在本仓上一级
-git clone https://github.com/SunWithCloude/Cw32l012_pac.git      ../cw32l012-pac
-git clone https://github.com/SunWithCloude/Rust_Cw32L012.git     ../cw32l012-hal
-git clone https://github.com/SunWithCloude/Cw32l012_embassy.git  ../embassy-cw32
+生态依赖已全部发布 crates.io（PAC/HAL 按版本依赖引入，无需克隆生态仓）；
+`embassy-cw32` 尚未发布（0.4.0 待定档），例程以 git 依赖引入，首次构建需
+联网拉取 GitHub：
 
+```bash
 cargo install mdbook
 mdbook build                                     # 书 → book/
 cargo build --workspace --target thumbv6m-none-eabi --release --examples
 ```
+
+要改生态源码做实验，在自己工程的 `Cargo.toml` 里加 `[patch.crates-io]`
+把依赖指回本地检出即可（写法见第 1 章）。
 
 写作规范见 [CONVENTIONS.md](CONVENTIONS.md)。

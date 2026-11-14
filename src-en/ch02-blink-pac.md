@@ -24,7 +24,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
+cw32l012-pac-um = { version = "=0.3.0", features = ["rt"] }
 ```
 
 `features = ["rt"]` makes the PAC additionally generate two link-time artifacts: the `__INTERRUPTS` interrupt vector table and the `device.x` interrupt symbol list (see the PAC's `docs/rt-smoke.md` for details). Without `rt`, the PAC is just "a pile of address constants"; the linked firmware has no vector table, and after reset the CPU cannot fetch its first instruction.
@@ -179,7 +179,7 @@ fn delay(n: u32) {
 #![no_main]
 
 use cortex_m_rt::entry;
-use cw32l012_pac::{Peripherals, sysctrl as sc};
+use cw32l012_pac_um::{Peripherals, sysctrl as sc};
 
 /// Bit mask of PC13 in the port registers (GPIO bit fields are all numbered
 /// by PINy: PIN13 = bit13)
@@ -314,7 +314,7 @@ The library's entire content is one `board` module (`src/board.rs`) with two sma
 
 use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m::peripheral::Peripherals as CorePeripherals;
-use cw32l012_pac::{Peripherals, sysctrl as sc, Gpio};
+use cw32l012_pac_um::{Peripherals, sysctrl as sc, Gpio};
 
 /// Bit mask of PC13 in the port registers (GPIO bit fields are all numbered
 /// by PINy: PIN13 = bit13)
@@ -330,7 +330,7 @@ pub const HCLK_HZ: u32 = 4_000_000;
 // SysTick is a **core** peripheral of ARMv6-M (register block in the system
 // control space at 0xE000_E010, ARMv6-M Architecture Reference Manual DDI
 // 0419 §B3.3), not one of the CW32L012's chip peripherals, so the
-// hand-written PAC (cw32l012-pac) does not model it — the delay can only be
+// hand-written PAC (cw32l012-pac-um) does not model it — the delay can only be
 // reached through the cortex-m crate's `SYST` type (that crate is already
 // in the workspace dependency tree, pulled in via embassy-executor's
 // cortex-m platform layer; examples/pac declares 0.7 explicitly to align
@@ -492,7 +492,7 @@ With `board` in place, the same blink example looks like this (`examples/pac/exa
 
 use cortex_m_rt::entry;
 use cw32_book_pac::board::{Led, delay_ms};
-use cw32l012_pac::Peripherals;
+use cw32l012_pac_um::Peripherals;
 
 #[entry]
 fn main() -> ! {

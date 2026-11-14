@@ -5,7 +5,7 @@ In this chapter you will learn:
 - to install the Rust stable toolchain with `rustup`, and add the cross-compilation target that microcontrollers need, `thumbv6m-none-eabi`;
 - to install the flashing and debugging tool probe-rs, and get to know the debugger in your hand;
 - to set up an editor with `rust-analyzer`;
-- the directory layout shared by this book's repository and the three ecosystem repositories, and why the `path` dependencies are wired the way they are;
+- how the three ecosystem dependencies are declared — exact-pinned crates.io releases plus one git dependency — and that **getting through this book requires cloning no repositories**;
 - to verify the whole environment with one command: compile every example in the book into Cortex-M0+ firmware.
 
 This chapter has no firmware example — the goal is that by the end, Chapter 2's `ch02_blink` compiles with a single command.
@@ -78,55 +78,52 @@ Any editor can write Rust, but **rust-analyzer is a must** — it is far more th
 
 Optional: the **probe-rs debugging** extension for VS Code adds graphical breakpoint debugging — flashing, breakpoints, and variable inspection all happen inside the editor. Chapters 2 and 3 only need the command line; installing this extension any time from Chapter 7 onward is fine too.
 
-## Repository Layout: One Book with Three Ecosystem Repos
+## The Ecosystem Dependencies: Three Declarations, No Cloning Required
 
-The book's examples do not bundle their dependencies; they reference the sources of three ecosystem repositories directly:
+The three ecosystem dependencies of this book's examples (introduced one by one from Chapter 4 on) come from the following sources, with these version conventions:
 
-| Repository | Role | How the book references it |
-|------|------|--------------|
-| `cw32l012-pac` | Register access layer (PAC) | the `examples/pac` example crate |
-| `cw32l012-hal` | Blocking HAL (the crate lives in a same-named subdirectory of the repo) | the `examples/hal` example crate |
-| `embassy-cw32` | Async HAL | the `examples/embassy` example crate |
+| Dependency | Role | Version and how it is pulled in |
+|------|------|----------------|
+| `cw32l012-pac-um` | Register access layer (PAC) | crates.io, exact-pinned `=0.3.0` |
+| `cw32l012-hal` | Blocking HAL (the crate lives in a same-named subdirectory of the repo) | crates.io, `"0.9.2"` |
+| `embassy-cw32` | Async HAL | git dependency (not yet published to crates.io) |
 
-They are expected to sit **side by side** with the book's repository (in the example below, `book/` stands for any directory where you keep code):
-
-```text
-book/
-├── rust-on-cw32/          # this book's repository
-│   └── examples/pac/Cargo.toml
-├── cw32l012-pac/          # PAC: the repository root is the crate
-├── cw32l012-hal/          # HAL: a same-named crate directory under the repo root
-│   └── cw32l012-hal/
-└── embassy-cw32/          # async HAL: the repository root is the crate
-```
-
-Clone them into these positions:
+**Conclusion first: getting through this book requires cloning no ecosystem repository.** All three dependencies are fetched by cargo automatically. Once Rust is installed, you can start your own project like this from any directory:
 
 ```bash
-cd book
-git clone https://github.com/SunWithCloude/rust-on-cw32
-git clone https://github.com/SunWithCloude/cw32l012-pac
-git clone https://github.com/SunWithCloude/cw32l012-hal
-git clone https://github.com/SunWithCloude/embassy-cw32
+cargo new my-first-cw32
+cd my-first-cw32
+cargo add cw32l012-pac-um
 ```
 
-## Why the path Dependencies Are Wired This Way
+`cargo add cw32l012-pac-um` drops the register access layer into your `Cargo.toml` — the PAC is a zero-dependency, pure register layer, one command and you are done. (About the `-um` suffix in the name: on crates.io, `cw32l012_pac` has been taken by a third-party svd2rust version with defects; the hand-written transcription was published under a new name — the story is in Appendix B.)
 
-Open `examples/pac/Cargo.toml` and the dependency reads:
+The dependency declarations of the three example crates (`examples/pac`, `examples/hal`, `examples/embassy`) are exactly these three lines (taken apart from Chapter 2 on):
 
 ```toml
-[dependencies]
-cw32l012-pac = { path = "../../../cw32l012-pac", features = ["rt"] }
+# examples/pac/Cargo.toml
+cw32l012-pac-um = { version = "=0.3.0", features = ["rt"] }
+
+# examples/hal/Cargo.toml
+cw32l012-hal = "0.9.2"
+
+# examples/embassy/Cargo.toml
+embassy-cw32 = { git = "https://github.com/SunWithCloude/Cw32l012_embassy", branch = "main", features = ["rt"] }
 ```
 
-`../../../` walks up three levels from `examples/pac/` and lands exactly on `book/` — the directory where the three ecosystem repos sit side by side. Cargo resolves `path` dependencies **relative to the Cargo.toml they are written in**, so as long as the side-by-side layout is kept when cloning, everything works immediately, with no extra installation of any ecosystem component.
+Two conventions to note:
 
-Two reasons behind this design:
+- **Why the PAC is exact-pinned with `=`**: any "automatic upgrade" of the register layer could silently shift bitfield assumptions (one bit off, and the whole firmware's behavior changes). Upgrades must change the version number by hand and re-run every example. The HAL can use normal semver (`0.9.2`). embassy-cw32 rides a git dependency because it is not yet published on crates.io (0.4.0 pending) — once it ships, switch back to a version dependency.
+- **For developers who want to modify the ecosystem sources**: clone the ecosystem repos anywhere you like, then add a `[patch.crates-io]` section to **your project's root `Cargo.toml`** pointing the crates.io dependencies back at the local checkouts (this is how this book's own writing-period verification loop worked):
 
-- **Change a line, see it at once.** This book explains PAC/HAL implementation details at length (Chapter 2, for instance, dissects the KEY write-protection write sequence line by line). Add a comment or a marker in the ecosystem source, recompile the example, and you can observe the effect — a dependency published to crates.io cannot do that.
-- **The version always follows the repository.** The three ecosystem repos evolve fast (the HAL is still gaining peripherals at a brisk pace). A path dependency keeps "the code in the book" and "the code in the repository" the same code; there is no mismatch where "the book shows the v0.9 API while crates.io already serves v1.0".
+```toml
+[patch.crates-io]
+cw32l012-pac-um = { path = "../cw32l012-pac" }
+cw32l012-hal = { path = "../cw32l012-hal/cw32l012-hal" }
+embassy-cw32 = { path = "../embassy-cw32" }
+```
 
-The price is that the clone location must be right. If you put an ecosystem repo somewhere else, the build fails with `failed to load source for dependency ... cw32l012-pac` — move the directory back beside the book, or change the `path` in that example crate's `Cargo.toml` to your actual location.
+Change a line of source, recompile the example, and the effect is immediate — that workflow is beyond a read-only version dependency, but it is an advanced move; none of the book's examples rely on it.
 
 ## Acceptance: Compile Every Example in One Command
 
@@ -162,6 +159,7 @@ cargo build --release --target thumbv6m-none-eabi --example ch02_blink -p cw32-b
 
 - **Forgot to run `rustup target add`**: the build fails with `can't find crate for 'core'` — the target's core libraries are missing; go back to the second section and install them.
 - **`cargo install probe-rs-tools` without `--locked`**: dependency resolution may fail; the official documentation explicitly requires `--locked`.
-- **Ecosystem repos not placed side by side**: the build reports `failed to load source for dependency`; move the directories per the layout above, or fix the `path`.
-- **The first build is slow**: that is normal — the three ecosystem crates are being fully compiled for the M0+ once; after that, incremental builds finish in seconds.
+- **Writing the dependency as `cw32l012-pac` (without `-um`)**: cargo fetches the same-named third-party svd2rust crate on crates.io, which has defects (mismatched API, three register defects). This ecosystem's hand-written PAC is named `cw32l012-pac-um` — see the naming story in Appendix B.
+- **The first build of the embassy examples stalls updating git dependencies**: `embassy-cw32` is a git dependency; the first resolution clones the GitHub repo and needs network access. On offline machines, run `cargo fetch` once on a networked one.
+- **The first build is slow**: that is normal — the three ecosystem dependencies are being fully compiled for the M0+ once; after that, incremental builds finish in seconds.
 - **rustup installed inside WSL, probe-rs installed on Windows (or the other way around)**: the two environments cannot see each other; install the full set on one side.

@@ -286,8 +286,9 @@ embassy-cw32 的上板记录。
 - **连开两个端口时钟被覆盖**：`sysctrl_enable_gpioX` 系列是键控整字写
   （高 16 位必须 0x5A5A），第二次写会把第一次的位清掉；两个端口要一次写齐
   （第 8 章例程演示）。
-- **混用两个 critical-section 实现**：`embassy-cw32`（默认开启）与
-  `cw32l012-hal` 的 `critical-section-impl` 不能同固件共存，链接期冲突；
-  本书用独立例程 crate 隔离。
+- **混用两个 critical-section 实现**：embassy 侧的实现（cortex-m 的
+  `critical-section-single-core`，随依赖自动带上）与 `cw32l012-hal` 的
+  `critical-section-impl` 不能同固件共存，链接期冲突；本书用独立例程
+  crate 隔离。
 - **极短定时器晚到**：比 100 systick（4MHz 下 25µs）更近的闹钟最多晚这么
   多触发，不早到。对毫秒级的周期无影响。

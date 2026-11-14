@@ -66,11 +66,10 @@ panic messages, move the rprintln from Chapter 3 into the lib.
 Turn everything off (`default-features = false`) and you are back to the
 zero-dependency, bare-register form.
 
-**Version basis**: `0.8` has been published on crates.io; this book's
-examples use the repository-path version **0.9.x** (`examples/hal/Cargo.toml`
-points at the ecosystem repo via `path`). The two have identical APIs; 0.9
-mainly adds ecosystem integration and on-hardware verification, and does not
-change existing signatures.
+**Version basis**: crates.io has **0.9.2** published, and this book's
+examples use exactly that version (`examples/hal/Cargo.toml`:
+`cw32l012-hal = "0.9.2"`). 0.9 mainly adds ecosystem integration and
+on-hardware verification, and does not change existing signatures.
 
 ## 4.2 The Ownership Model: Peripherals::take()
 
