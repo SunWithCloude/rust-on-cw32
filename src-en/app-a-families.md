@@ -102,7 +102,7 @@ Before porting, first confirm that the target family has the modules you need
 | `spi` | all 11 families | L012 has SPI1/2/3, F030 SPI1/2, **l083 SPI1/2**, the rest a single instance |
 | `i2c` | 10 of 11 (except L011) | L012 is command-FIFO style; the other 9 are classic state-machine style (F030 verified on hardware) |
 | `adc` | L012 + F030/F020 (from 0.4.0 on, all 11 families) | L012 has dual ADCs (including `vdda_mv()`/`temperature_mc()`); the classic group is a completely different IP, single-shot/4-result sequence |
-| `timer` (PWM / complementary PWM) | all 11 families | GTIM edge-aligned PWM with a full scale of 10,000; the classic generation has no shadow registers, takes effect immediately. ATIM complementary PWM: `atim` (l012/l010/l011, ST-style BDTR dead time/brake; l010 has no external brake pin) + `atim_classic` (f030, PWM2S/DTR double-buffered) — see Chapter 16 |
+| `timer` (PWM / complementary PWM) | all 11 families | GTIM edge-aligned PWM with a full scale of 10,000; the classic generation has no shadow registers, takes effect immediately. ATIM complementary PWM: `atim` (l012/l010/l011, ST-style BDTR dead time/brake; l010 has no external brake pin) + `atim_classic` (all 7 classic families f030/f003/l031/r031/w031/l052/l083, PWM2S/DTR double-buffered; pins extracted dual-source per family, f003 all AF4) — see Chapter 16 |
 | `rtc` / `wdt` / `dac` | **L012 only** (from 0.4.0 on, rtc/wdt extend to the classic generation) | the classic generation gets `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt` (a different IP); `dac` remains L012-only |
 | `dma` | L012 (`Dma`) + the 7 classic families (`ClassicDma`) | F003/L010/L011 have no DMA hardware, hence no driver |
 
@@ -111,7 +111,9 @@ Before porting, first confirm that the target family has the modules you need
 > families, classic GTIM PWM, classic RTC/IWDT/WWDGT, the L012 FLASH driver,
 > the L012 OPA, and I2C transactions, plus two-generation ATIM complementary
 > PWM (L012 `atim` + f030 `atim_classic`, see Chapter 16); 0.5.0 adds l010/l011
-> PWM, full l083 DMA wiring, and read-modify-write clock gates everywhere — these are new drivers that this book's
+> PWM, full l083 DMA wiring, and read-modify-write clock gates everywhere; 0.6.0 extends
+> the classic ATIM complementary PWM to the remaining 6 families (one driver for all 7,
+> manual-level evidence per family) — these are new drivers that this book's
 > body does not yet cover; read that CHANGELOG before porting.
 
 Hardware-verification records (which board verified what):

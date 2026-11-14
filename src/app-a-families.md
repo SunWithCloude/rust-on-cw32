@@ -77,7 +77,7 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 | `spi` | 全部 11 家族 | L012 SPI1/2/3，F030 SPI1/2，**l083 SPI1/2**，其余单实例 |
 | `i2c` | 10/11（L011 除外） | L012 命令 FIFO 式；其余 9 家经典状态机式（F030 已实板验证） |
 | `adc` | L012 + F030/F020（0.4.0 起补齐全部 11 家族） | L012 双 ADC（含 `vdda_mv()`/`temperature_mc()`）；经典组是完全不同的 IP，单发/4 结果序列 |
-| `timer`（PWM/互补 PWM） | 全部 11 家族 | GTIM 边沿对齐 PWM，万分比满量程；经典代无影子寄存器、立即生效。ATIM 互补 PWM：`atim`（l012/l010/l011，ST 式 BDTR 死区/刹车；l010 无外部刹车脚）+ `atim_classic`（f030，PWM2S/DTR 双缓冲）——见第 16 章 |
+| `timer`（PWM/互补 PWM） | 全部 11 家族 | GTIM 边沿对齐 PWM，万分比满量程；经典代无影子寄存器、立即生效。ATIM 互补 PWM：`atim`（l012/l010/l011，ST 式 BDTR 死区/刹车；l010 无外部刹车脚）+ `atim_classic`（经典 7 家族 f030/f003/l031/r031/w031/l052/l083，PWM2S/DTR 双缓冲；引脚逐家族双源提取，f003 全 AF4）——见第 16 章 |
 | `rtc` / `wdt` / `dac` | **仅 L012**（0.4.0 起 rtc/wdt 补齐经典代） | 经典代为 `ClassicRtc`/`ClassicIwdt`/`ClassicWwdgt`（另一套 IP）；`dac` 仍仅 L012 |
 | `dma` | L012（`Dma`）+ 经典 7 家族（`ClassicDma`） | F003/L010/L011 无 DMA 硬件，自然无驱动 |
 
@@ -85,7 +85,8 @@ README 实机验证列；embassy-cw32 README "F030 family notes"）。
 > UART/SPI DMA、ADC 补齐全部 11 家族、经典 GTIM PWM、经典 RTC/IWDT/WWDGT、
 > L012 FLASH 驱动、L012 OPA、I2C transaction、ATIM 互补 PWM 双代（L012 `atim` +
 > f030 `atim_classic`，见第 16 章）；0.5.0：l010/l011 PWM 接入、l083 DMA 全
-> 接线、全家族门控读改写收敛——这些是新驱动，本书正文暂不
+> 接线、全家族门控读改写收敛；0.6.0：经典 ATIM 互补 PWM 补齐 6 家族
+> （七家族一套驱动，全家族手册级证据）——这些是新驱动，本书正文暂不
 > 展开，移植前先读该 CHANGELOG。
 
 实机验证记录（哪块板验证了什么）：
